@@ -1,5 +1,5 @@
 'use client';
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import { Briefcase, Bell, Globe, Cpu, Target, Shield, Layers, ArrowRight, CheckCircle, Zap } from 'lucide-react';
@@ -9,8 +9,8 @@ import HeroSearch from '@/components/home/HeroSearch';
 
 // --- Animation Variants ---
 const fadeInUp: Variants = {
-  hidden: { opacity: 0, y: 60 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  hidden: { opacity: 0, y: 40 }, // Y value kam kiya taaki rendering fast ho
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } } // Duration kam ki
 };
 
 const staggerContainer: Variants = {
@@ -18,7 +18,7 @@ const staggerContainer: Variants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2
+      staggerChildren: 0.1 // Stagger fast kiya
     }
   }
 };
@@ -27,12 +27,19 @@ export default function HomePage() {
   
   // --- Parallax Setup ---
   const ref = useRef(null);
+  
+  // Mobile Check to disable heavy scroll listeners
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (window.innerWidth < 768) setIsMobile(true);
+  }, []);
+
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end end"]
   });
 
-  // Smooth Parallax movement for specific sections
+  // Desktop only parallax
   const yBackground = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
 
   return (
@@ -45,7 +52,7 @@ export default function HomePage() {
       ========================================= */}
       <section className="relative pt-10 pb-20 lg:pt-20 lg:pb-32 overflow-hidden border-b border-gray-200 dark:border-white/5">
         
-        {/* 🔥 FIX 1: Background Glows ko 'hidden md:block' kar diya (Mobile pe band) */}
+        {/* Glows: Hidden on Mobile */}
         <motion.div 
           animate={{ x: [0, 50, 0], y: [0, -50, 0], opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
@@ -60,7 +67,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
             
-            {/* Left: Text Content (Staggered Fade In) */}
+            {/* Left: Text Content */}
             <motion.div 
               initial="hidden"
               animate="visible"
@@ -69,7 +76,9 @@ export default function HomePage() {
             >
               
               <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100/50 border border-teal-200 text-teal-700 dark:bg-teal-400/5 dark:border-teal-400/20 dark:text-teal-400 text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-sm">
-                <span className="w-2 h-2 bg-teal-600 dark:bg-teal-400 rounded-full animate-ping"></span>
+                {/* Ping removed on mobile to save battery */}
+                <span className="w-2 h-2 bg-teal-600 dark:bg-teal-400 rounded-full md:animate-ping"></span>
+                <span className="w-2 h-2 bg-teal-600 dark:bg-teal-400 rounded-full absolute md:hidden"></span>
                 System Online: Scanning Feeds
               </motion.div>
               
@@ -112,8 +121,7 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
 
-            {/* Right: The Hologram Graphic (Floating) */}
-            {/* 🔥 FIX 2: 'hidden lg:flex' add kiya. Mobile pe 3D Hologram gayab, PC pe visible. */}
+            {/* Right: Hologram (PC Only) */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -128,7 +136,7 @@ export default function HomePage() {
       </section>
 
       {/* =========================================
-          🔥 SECTION: THE ENGINE (Scroll Reveal)
+          🔥 SECTION: THE ENGINE
       ========================================= */}
       <section className="py-24 relative bg-white dark:bg-[#0B1C36] overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
@@ -136,7 +144,7 @@ export default function HomePage() {
           <motion.div 
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, margin: "-50px" }} // Margin kam kiya
             variants={fadeInUp}
             className="text-center max-w-3xl mx-auto mb-16"
           >
@@ -149,13 +157,13 @@ export default function HomePage() {
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
+            viewport={{ once: true, margin: "-20px" }}
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
           >
             {/* Step 1 */}
-            <motion.div variants={fadeInUp} className="group relative p-8 rounded-3xl bg-slate-50 dark:bg-[#112240] border border-gray-200 dark:border-white/5 hover:border-teal-500/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-teal-500/10">
+            <motion.div variants={fadeInUp} className="group relative p-8 rounded-3xl bg-slate-50 dark:bg-[#112240] border border-gray-200 dark:border-white/5 hover:border-teal-500/30 transition-all duration-300">
               <div className="absolute top-0 right-0 p-6 opacity-10 text-9xl font-bold text-slate-900 dark:text-white select-none pointer-events-none">1</div>
-              <div className="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-6">
                 <Globe size={28} />
               </div>
               <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Global Scan</h4>
@@ -165,9 +173,9 @@ export default function HomePage() {
             </motion.div>
 
             {/* Step 2 */}
-            <motion.div variants={fadeInUp} className="group relative p-8 rounded-3xl bg-slate-50 dark:bg-[#112240] border border-gray-200 dark:border-white/5 hover:border-teal-500/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-teal-500/10">
+            <motion.div variants={fadeInUp} className="group relative p-8 rounded-3xl bg-slate-50 dark:bg-[#112240] border border-gray-200 dark:border-white/5 hover:border-teal-500/30 transition-all duration-300">
               <div className="absolute top-0 right-0 p-6 opacity-10 text-9xl font-bold text-slate-900 dark:text-white select-none pointer-events-none">2</div>
-              <div className="w-14 h-14 rounded-2xl bg-teal-100 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-teal-100 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center mb-6">
                 <Cpu size={28} />
               </div>
               <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-3">AI Context Extraction</h4>
@@ -177,9 +185,9 @@ export default function HomePage() {
             </motion.div>
 
             {/* Step 3 */}
-            <motion.div variants={fadeInUp} className="group relative p-8 rounded-3xl bg-slate-50 dark:bg-[#112240] border border-gray-200 dark:border-white/5 hover:border-teal-500/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-teal-500/10">
+            <motion.div variants={fadeInUp} className="group relative p-8 rounded-3xl bg-slate-50 dark:bg-[#112240] border border-gray-200 dark:border-white/5 hover:border-teal-500/30 transition-all duration-300">
               <div className="absolute top-0 right-0 p-6 opacity-10 text-9xl font-bold text-slate-900 dark:text-white select-none pointer-events-none">3</div>
-              <div className="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-6">
                 <Target size={28} />
               </div>
               <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Direct Connect</h4>
@@ -193,21 +201,24 @@ export default function HomePage() {
       </section>
 
       {/* =========================================
-          🔥 SECTION: WHY US (Parallax Effect)
+          🔥 SECTION: WHY US (Optimized Parallax)
       ========================================= */}
       <section className="py-24 bg-slate-50 dark:bg-[#0A192F] relative overflow-hidden">
-        {/* Parallax Background */}
-        <motion.div style={{ y: yBackground }} className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></motion.div>
+        {/* Parallax Background - ONLY DESKTOP */}
+        <motion.div 
+          style={{ y: isMobile ? 0 : yBackground }} // 🔥 Mobile par 0 movement
+          className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"
+        ></motion.div>
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col md:flex-row gap-12 items-center">
             
-            {/* Left Column: Text (Slower Scroll) */}
+            {/* Left Column */}
             <motion.div 
-               initial={{ opacity: 0, x: -50 }}
+               initial={{ opacity: 0, x: -20 }}
                whileInView={{ opacity: 1, x: 0 }}
                viewport={{ once: true }}
-               transition={{ duration: 0.8 }}
+               transition={{ duration: 0.5 }}
                className="md:w-1/2"
             >
               <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">
@@ -243,37 +254,33 @@ export default function HomePage() {
               </button>
             </motion.div>
 
-            {/* Right Column: Grid (Faster Scroll Effect - Parallax) */}
+            {/* Right Column: Cards */}
             <motion.div 
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               className="md:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-4"
             >
-               {/* Feature Card 1 */}
-               <motion.div whileHover={{ y: -5 }} className="p-6 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5">
+               <div className="p-6 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5">
                   <Shield size={32} className="text-teal-500 mb-4" />
                   <h4 className="font-bold text-lg dark:text-white mb-2">Zero Spam</h4>
                   <p className="text-xs text-slate-500 dark:text-gray-400">We auto-block recruiters and agencies. Only direct company posts.</p>
-               </motion.div>
-               {/* Feature Card 2 */}
-               <motion.div whileHover={{ y: -5 }} className="p-6 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 sm:mt-8">
+               </div>
+               <div className="p-6 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 sm:mt-8">
                   <Layers size={32} className="text-blue-500 mb-4" />
                   <h4 className="font-bold text-lg dark:text-white mb-2">Smart Sorting</h4>
                   <p className="text-xs text-slate-500 dark:text-gray-400">Jobs are categorized by skill level: Junior, Senior, and Founder.</p>
-               </motion.div>
-               {/* Feature Card 3 */}
-               <motion.div whileHover={{ y: -5 }} className="p-6 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5">
+               </div>
+               <div className="p-6 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5">
                   <Zap size={32} className="text-yellow-500 mb-4" />
                   <h4 className="font-bold text-lg dark:text-white mb-2">Lightning Fast</h4>
                   <p className="text-xs text-slate-500 dark:text-gray-400">Be the first to apply. Alerts are sent the moment a tweet goes live.</p>
-               </motion.div>
-               {/* Feature Card 4 */}
-               <motion.div whileHover={{ y: -5 }} className="p-6 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 sm:mt-8">
+               </div>
+               <div className="p-6 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 sm:mt-8">
                   <Briefcase size={32} className="text-purple-500 mb-4" />
                   <h4 className="font-bold text-lg dark:text-white mb-2">Contract Work</h4>
                   <p className="text-xs text-slate-500 dark:text-gray-400">Special filters for Freelancers and Fractional roles.</p>
-               </motion.div>
+               </div>
             </motion.div>
 
           </div>
@@ -281,13 +288,15 @@ export default function HomePage() {
       </section>
 
       {/* =========================================
-          🔥 SECTION: CTA (Pulse Effect)
+          🔥 SECTION: CTA (Pulse Removed on Mobile)
       ========================================= */}
       <section className="py-20 bg-teal-600 dark:bg-teal-900/30 relative overflow-hidden">
+         {/* Static BG for Mobile, Animated for Desktop */}
+         <div className="absolute inset-0 bg-teal-600 dark:bg-teal-900/30 backdrop-blur-3xl opacity-50 md:hidden"></div>
          <motion.div 
            animate={{ scale: [1, 1.2, 1], rotate: [0, 5, 0] }}
            transition={{ duration: 20, repeat: Infinity }}
-           className="absolute inset-0 bg-teal-600 dark:bg-teal-900/30 backdrop-blur-3xl opacity-50"
+           className="hidden md:block absolute inset-0 bg-teal-600 dark:bg-teal-900/30 backdrop-blur-3xl opacity-50"
          />
          
          <div className="container mx-auto px-4 relative z-10 text-center">
@@ -295,30 +304,20 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
               className="text-3xl md:text-5xl font-bold text-white mb-6"
             >
               Ready to hunt?
             </motion.h2>
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-teal-100 mb-10 max-w-xl mx-auto text-lg"
-            >
+            <p className="text-teal-100 mb-10 max-w-xl mx-auto text-lg">
               Join 5,000+ developers who stopped searching and started finding.
-            </motion.p>
+            </p>
             
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-block"
-            >
+            <div className="inline-block hover:scale-105 transition-transform">
               <Link href="/login" className="px-10 py-4 bg-white text-teal-700 font-bold rounded-xl shadow-xl hover:bg-gray-100 transition-colors w-full sm:w-auto inline-flex items-center gap-2">
                 Get Started for Free <Zap size={20} className="fill-current" />
               </Link>
-            </motion.div>
+            </div>
          </div>
       </section>
 
