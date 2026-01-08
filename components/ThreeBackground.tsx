@@ -4,7 +4,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 
 function StarField(props: any) {
-  const ref = useRef<any>();
+  const ref = useRef<any>(null);
   
   // 🔥 FIX: Manual Position Generation (No 'maath' dependency)
   // Hum 2000 particles bana rahe hain (2000 * 3 coordinates X, Y, Z)
