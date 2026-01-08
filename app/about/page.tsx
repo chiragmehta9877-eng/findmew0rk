@@ -1,14 +1,14 @@
 'use client';
 import React from 'react';
-import { motion, Variants } from 'framer-motion'; // 👈 'Variants' import kiya hai fix ke liye
+import { motion, Variants } from 'framer-motion'; 
 import { Github, Linkedin, Twitter, Zap, Target, Users } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import ParticleBackground from '@/components/about/ParticleBackground';
 
-// 👇 Yahan ': Variants' lagaya hai taaki TypeScript shant rahe
+// 👇 Animation tweak: Mobile ke liye distance kam kiya (y: 60 -> 30)
 const fadeInUp: Variants = {
-  hidden: { opacity: 0, y: 60 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
 };
 
 const staggerContainer: Variants = {
@@ -16,7 +16,7 @@ const staggerContainer: Variants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2
+      staggerChildren: 0.15 // Thoda fast kiya
     }
   }
 };
@@ -29,8 +29,13 @@ export default function AboutPage() {
       {/* --- SECTION 1: HERO & SITE INFO --- */}
       <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
         
-        {/* 3D Background */}
-        <ParticleBackground />
+        {/* 🔥 FIX 1: Heavy 3D Background HIDDEN on Mobile */}
+        <div className="hidden md:block absolute inset-0">
+           <ParticleBackground />
+        </div>
+
+        {/* 🔥 FIX 2: Mobile Fallback (Lightweight Gradient) */}
+        <div className="md:hidden absolute inset-0 bg-gradient-to-b from-transparent via-teal-50/20 to-slate-100/50 dark:via-teal-900/10 dark:to-[#0A192F] pointer-events-none" />
 
         <div className="container mx-auto px-4 relative z-10">
           <motion.div 
@@ -46,14 +51,15 @@ export default function AboutPage() {
                </span>
             </motion.div>
             
-            <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight">
+            {/* 👇 Text size adjust kiya mobile ke liye (text-4xl) */}
+            <motion.h1 variants={fadeInUp} className="text-4xl md:text-7xl font-extrabold mb-8 tracking-tight">
               We Don't Find Jobs. <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 via-blue-500 to-purple-600">
                 We Hunt Opportunities.
               </span>
             </motion.h1>
 
-            <motion.p variants={fadeInUp} className="text-lg md:text-xl text-slate-600 dark:text-gray-300 leading-relaxed mb-12">
+            <motion.p variants={fadeInUp} className="text-lg md:text-xl text-slate-600 dark:text-gray-300 leading-relaxed mb-12 px-2">
               The traditional job search is broken. While you scroll through outdated listings, 
               the best opportunities are being discussed in real-time on <span className="font-bold text-teal-500">Twitter Threads</span> and <span className="font-bold text-blue-500">LinkedIn Posts</span>. 
               <br /><br />
@@ -68,7 +74,7 @@ export default function AboutPage() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-12 md:mt-16"
           >
             {[
               { icon: <Zap size={32} />, title: "Real-Time AI Scanning", desc: "Our bots monitor thousands of tech influencers & founders 24/7." },
@@ -78,7 +84,7 @@ export default function AboutPage() {
               <motion.div 
                 key={i} 
                 variants={fadeInUp}
-                className="p-8 rounded-3xl bg-white/40 dark:bg-[#112240]/40 backdrop-blur-md border border-white/20 dark:border-white/5 hover:border-teal-500/50 transition-colors shadow-xl"
+                className="p-6 md:p-8 rounded-3xl bg-white/40 dark:bg-[#112240]/40 backdrop-blur-md border border-white/20 dark:border-white/5 hover:border-teal-500/50 transition-colors shadow-xl"
               >
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-400 to-blue-600 flex items-center justify-center text-white mb-6 shadow-lg shadow-teal-500/20">
                   {feature.icon}
@@ -92,21 +98,20 @@ export default function AboutPage() {
       </section>
 
       {/* --- SECTION 2: THE TEAM --- */}
-      <section className="relative py-32 bg-slate-100 dark:bg-[#060f1e]">
+      <section className="relative py-20 md:py-32 bg-slate-100 dark:bg-[#060f1e]">
         <div className="container mx-auto px-4">
           
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-20"
+            className="text-center mb-12 md:mb-20"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Meet the Minds</h2>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">Meet the Minds</h2>
             <div className="w-24 h-1 bg-teal-500 mx-auto rounded-full"></div>
             <p className="mt-4 text-slate-500 dark:text-gray-400">Building the future of recruitment.</p>
           </motion.div>
 
-          {/* Flex Container for Centering */}
           <div className="flex flex-wrap justify-center gap-12 max-w-6xl mx-auto">
             
             {/* --- MEMBER 1: CHIRAG --- */}
@@ -117,7 +122,7 @@ export default function AboutPage() {
                 image="/chirag-mehta.jpg" 
                 desc="The architect behind the AI core. Chirag specializes in Full-Stack Development and Generative AI. He built the scraping engine that powers FindMeWork's real-time feeds."
                 socials={{ github: "#", linkedin: "#", twitter: "#" }}
-                delay={0.2}
+                delay={0.1}
                 />
             </div>
 
@@ -133,21 +138,22 @@ export default function AboutPage() {
 function TeamCard({ name, role, image, desc, socials, delay }: any) {
   return (
     <motion.div 
-      initial={{ opacity: 0, x: -50 }}
-      whileInView={{ opacity: 1, x: 0 }}
+      initial={{ opacity: 0, y: 30 }} // Mobile pe X slide ki jagah Y slide better lagta hai
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.8, delay: delay, ease: "easeOut" }}
+      transition={{ duration: 0.6, delay: delay, ease: "easeOut" }}
       className="group relative"
     >
-      {/* Background Glow Effect */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-teal-500 to-blue-600 rounded-[2rem] opacity-30 group-hover:opacity-100 blur transition duration-500"></div>
+      {/* Background Glow Effect - Thoda subtle kiya mobile ke liye */}
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-teal-500 to-blue-600 rounded-[2rem] opacity-20 group-hover:opacity-100 blur transition duration-500 hidden md:block"></div>
       
-      <div className="relative bg-white dark:bg-[#0A192F] rounded-[1.9rem] p-8 md:p-10 flex flex-col md:flex-row gap-8 items-center md:items-start h-full transform transition hover:-translate-y-2 duration-300">
+      {/* Mobile border added manually since glow is hidden */}
+      <div className="relative bg-white dark:bg-[#0A192F] rounded-[1.9rem] p-6 md:p-10 flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start h-full transform transition md:hover:-translate-y-2 duration-300 border border-gray-200 dark:border-white/5 md:border-none shadow-lg">
         
         {/* Profile Image with Fancy Border */}
         <div className="shrink-0 relative">
           <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl overflow-hidden border-4 border-white dark:border-[#112240] shadow-xl">
-            <img src={image} alt={name} className="w-full h-full object-cover transform group-hover:scale-110 transition duration-500" />
+            <img src={image} alt={name} className="w-full h-full object-cover transform md:group-hover:scale-110 transition duration-500" />
           </div>
           {/* Floating Icon */}
           <div className="absolute -bottom-3 -right-3 bg-teal-500 text-white p-2 rounded-lg shadow-lg">
