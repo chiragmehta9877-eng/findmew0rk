@@ -1,11 +1,12 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { MapPin, Linkedin, ArrowRight, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+// 👇 'X' icon add kiya close button ke liye
+import { MapPin, Linkedin, ArrowRight, Filter, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar'; 
 import JobHero from '@/components/JobHero'; 
-import ProtectedOverlay from '@/components/ProtectedOverlay'; // 🔥 Import Added
+import ProtectedOverlay from '@/components/ProtectedOverlay'; 
 
 const filterSections = [
   { 
@@ -31,6 +32,9 @@ export default function LinkedInJobsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("ESG");
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // 👇 New State for Mobile Filter Drawer
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   const jobsHeadingRef = useRef<HTMLDivElement>(null);
 
@@ -72,10 +76,9 @@ export default function LinkedInJobsPage() {
   const goToPrevPage = () => { if (currentPage > 1) setCurrentPage(curr => curr - 1); };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0A192F] text-slate-900 dark:text-white font-sans">
+    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0A192F] text-slate-900 dark:text-white font-sans relative">
       <Navbar />
       
-      {/* 🔥 WRAPPER START: Sirf Job Content Protect hoga */}
       <ProtectedOverlay>
 
           <JobHero 
@@ -87,12 +90,12 @@ export default function LinkedInJobsPage() {
 
           <div className="container mx-auto px-4 pb-20 flex flex-col lg:flex-row gap-8">
             
-            {/* Sidebar */}
+            {/* --- DESKTOP SIDEBAR (Hidden on Mobile) --- */}
             <aside className="w-full lg:w-72 shrink-0 hidden lg:block">
               <div className="bg-white dark:bg-[#112240] rounded-xl border border-gray-200 dark:border-white/5 shadow-sm sticky top-24 overflow-hidden">
                  <div className="p-5 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-white/5">
                     <h3 className="font-bold text-base flex items-center gap-2"><Filter size={16} /> Filters</h3>
-                    <span className="text-xs text-blue-600 cursor-pointer hover:underline">Reset</span>
+                    <span className="text-xs text-blue-600 cursor-pointer hover:underline" onClick={() => setSelectedCategory("ESG")}>Reset</span>
                  </div>
                  <div className="p-5 space-y-3">
                     {filterSections[0].items.map((item, i) => (
@@ -105,8 +108,18 @@ export default function LinkedInJobsPage() {
               </div>
             </aside>
 
-            {/* Main Grid */}
+            {/* --- MAIN CONTENT --- */}
             <main className="flex-1">
+               
+               {/* 🔥 MOBILE FILTER BUTTON (Visible only on Mobile) */}
+               <button 
+                  onClick={() => setIsFilterOpen(true)}
+                  className="lg:hidden w-full mb-6 flex items-center justify-center gap-2 bg-white dark:bg-[#112240] border border-gray-200 dark:border-white/10 p-4 rounded-xl font-bold shadow-sm text-slate-700 dark:text-white hover:bg-gray-50 transition-colors"
+               >
+                  <Filter size={20} className="text-[#0a66c2]" /> 
+                  Filter Jobs ({selectedCategory})
+               </button>
+
                <div ref={jobsHeadingRef} className="flex items-center justify-between mb-6 pt-2">
                   <h1 className="text-2xl font-bold flex items-center gap-2"><Linkedin className="text-[#0a66c2]" /> {selectedCategory} Jobs</h1>
                   <p className="text-slate-500 dark:text-gray-400 text-sm">
@@ -122,21 +135,21 @@ export default function LinkedInJobsPage() {
                  <>
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
                       {currentJobs.map((job) => {
-                         const isActive = activeId === job.job_id;
-                         const isExpanded = expandedId === job.job_id;
-                         
-                         return (
-                           <motion.div 
-                             layout 
-                             key={job.job_id} 
-                             onClick={() => setActiveId(job.job_id)}
-                             whileHover={{ scale: 1.01, y: -2 }}
-                             animate={isActive ? { borderColor: "#0a66c2", boxShadow: "0px 0px 20px rgba(10, 102, 194, 0.3)" } : { borderColor: "rgba(255,255,255,0.05)", boxShadow: "0px 2px 4px rgba(0,0,0,0.05)", y: 0 }}
-                             className={`bg-white dark:bg-[#112240] rounded-xl border p-5 cursor-pointer flex flex-col relative overflow-hidden transition-colors ${isActive ? 'z-10 border-[#0a66c2]' : 'border-gray-200 dark:border-white/5'}`}
-                           >
+                          const isActive = activeId === job.job_id;
+                          const isExpanded = expandedId === job.job_id;
+                          
+                          return (
+                            <motion.div 
+                              layout 
+                              key={job.job_id} 
+                              onClick={() => setActiveId(job.job_id)}
+                              whileHover={{ scale: 1.01, y: -2 }}
+                              animate={isActive ? { borderColor: "#0a66c2", boxShadow: "0px 0px 20px rgba(10, 102, 194, 0.3)" } : { borderColor: "rgba(255,255,255,0.05)", boxShadow: "0px 2px 4px rgba(0,0,0,0.05)", y: 0 }}
+                              className={`bg-white dark:bg-[#112240] rounded-xl border p-5 cursor-pointer flex flex-col relative overflow-hidden transition-colors ${isActive ? 'z-10 border-[#0a66c2]' : 'border-gray-200 dark:border-white/5'}`}
+                            >
                               <div className="flex justify-between items-start mb-4">
-                                 <img src={job.employer_logo || "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png"} alt="Logo" className="w-10 h-10 rounded shadow-sm object-cover bg-white p-1" onError={(e) => (e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png")}/>
-                                 <span className="text-[10px] font-bold px-2 py-1 rounded uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{job.category || "General"}</span>
+                                  <img src={job.employer_logo || "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png"} alt="Logo" className="w-10 h-10 rounded shadow-sm object-cover bg-white p-1" onError={(e) => (e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png")}/>
+                                  <span className="text-[10px] font-bold px-2 py-1 rounded uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{job.category || "General"}</span>
                               </div>
                               <h3 className="font-bold text-slate-900 dark:text-white text-lg leading-tight mb-1">{job.job_title}</h3>
                               <p className="text-sm font-medium text-slate-600 dark:text-gray-300 mb-3">{job.employer_name}</p>
@@ -152,16 +165,16 @@ export default function LinkedInJobsPage() {
                               </div>
 
                               <div className="mt-auto pt-4 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
-                                 <div>
-                                   <p className="text-[10px] text-gray-400 font-bold uppercase">Source</p>
-                                   <p className="text-xs font-bold text-teal-600 dark:text-teal-400">FindMeWork</p>
-                                 </div>
-                                 <Link href={`/linkedin-jobs/${job.job_id}`}>
-                                   <button className="bg-[#0A192F] dark:bg-white text-white dark:text-[#0A192F] px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1 shadow-md">View Details <ArrowRight size={12} /></button>
-                                 </Link>
+                                  <div>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase">Source</p>
+                                    <p className="text-xs font-bold text-teal-600 dark:text-teal-400">FindMeWork</p>
+                                  </div>
+                                  <Link href={`/linkedin-jobs/${job.job_id}`}>
+                                    <button className="bg-[#0A192F] dark:bg-white text-white dark:text-[#0A192F] px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1 shadow-md">View Details <ArrowRight size={12} /></button>
+                                  </Link>
                               </div>
-                           </motion.div>
-                         );
+                            </motion.div>
+                          );
                       })}
                    </div>
 
@@ -184,9 +197,69 @@ export default function LinkedInJobsPage() {
             </main>
           </div>
 
-      </ProtectedOverlay>
-      {/* 🔥 WRAPPER END */}
+          {/* 🔥 MOBILE FILTER DRAWER (SLIDE OVER) */}
+          <AnimatePresence>
+            {isFilterOpen && (
+              <>
+                {/* Backdrop */}
+                <motion.div 
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   exit={{ opacity: 0 }}
+                   onClick={() => setIsFilterOpen(false)}
+                   className="fixed inset-0 bg-black/60 z-[60] lg:hidden backdrop-blur-sm"
+                />
+                
+                {/* Drawer */}
+                <motion.div 
+                   initial={{ x: "100%" }}
+                   animate={{ x: 0 }}
+                   exit={{ x: "100%" }}
+                   transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                   className="fixed right-0 top-0 bottom-0 w-[80%] max-w-sm bg-white dark:bg-[#0A192F] z-[70] shadow-2xl lg:hidden flex flex-col"
+                >
+                   <div className="p-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center bg-gray-50 dark:bg-white/5">
+                      <h3 className="font-bold text-lg">Filter Jobs</h3>
+                      <button onClick={() => setIsFilterOpen(false)} className="p-2 bg-gray-200 dark:bg-white/10 rounded-full hover:bg-red-100 hover:text-red-600 transition-colors">
+                        <X size={20} />
+                      </button>
+                   </div>
+                   
+                   <div className="p-6 overflow-y-auto flex-1">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Select Category</h4>
+                      <div className="space-y-3">
+                        {filterSections[0].items.map((item, i) => (
+                           <label key={i} className="flex items-center gap-4 cursor-pointer p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-200 transition-all">
+                              <input 
+                                type="radio" 
+                                name="mobile-category" 
+                                checked={selectedCategory === item.value} 
+                                onChange={() => {
+                                  setSelectedCategory(item.value);
+                                  setIsFilterOpen(false); // Auto-close on selection
+                                }} 
+                                className="w-5 h-5 accent-[#0a66c2]" 
+                              />
+                              <span className={`text-base font-medium ${selectedCategory === item.value ? 'text-[#0a66c2] font-bold' : 'text-slate-700 dark:text-gray-300'}`}>{item.name}</span>
+                           </label>
+                        ))}
+                      </div>
+                   </div>
+                   
+                   <div className="p-5 border-t border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5">
+                      <button 
+                        onClick={() => setIsFilterOpen(false)}
+                        className="w-full py-3 bg-[#0a66c2] text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 active:scale-95 transition-transform"
+                      >
+                        Show Results
+                      </button>
+                   </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
 
+      </ProtectedOverlay>
     </div>
   );
 }
