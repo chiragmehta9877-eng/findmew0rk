@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-// 👇 Added 'X' icon for close button
 import { MapPin, Twitter, ArrowRight, Filter, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar'; 
@@ -32,8 +31,6 @@ export default function TwitterJobsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("ESG");
   const [currentPage, setCurrentPage] = useState(1);
-  
-  // 👇 New State for Mobile Filter Drawer
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   const jobsHeadingRef = useRef<HTMLDivElement>(null);
@@ -79,7 +76,6 @@ export default function TwitterJobsPage() {
     <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0A192F] text-slate-900 dark:text-white font-sans relative">
       <Navbar />
       
-      {/* 🔥 WRAPPER START */}
       <ProtectedOverlay>
 
           <JobHero 
@@ -112,10 +108,10 @@ export default function TwitterJobsPage() {
             {/* --- MAIN CONTENT --- */}
             <main className="flex-1">
                
-               {/* 🔥 MOBILE FILTER BUTTON (Visible only on Mobile) */}
+               {/* Mobile Filter Button */}
                <button 
                   onClick={() => setIsFilterOpen(true)}
-                  className="lg:hidden w-full mb-6 flex items-center justify-center gap-2 bg-white dark:bg-[#112240] border border-gray-200 dark:border-white/10 p-4 rounded-xl font-bold shadow-sm text-slate-700 dark:text-white hover:bg-gray-50 transition-colors"
+                  className="lg:hidden w-full mb-6 flex items-center justify-center gap-2 bg-white dark:bg-[#112240] border border-gray-200 dark:border-white/10 p-4 rounded-xl font-bold shadow-sm text-slate-700 dark:text-white hover:bg-gray-50 transition-colors active:scale-95"
                >
                   <Filter size={20} className="text-black dark:text-white" /> 
                   Filter Threads ({selectedCategory})
@@ -141,17 +137,19 @@ export default function TwitterJobsPage() {
                           
                           return (
                             <motion.div 
-                              layout 
+                              // 🔥 OPTIMIZATION 1: 'layout' prop REMOVED. 
+                              // Yeh mobile lag ka sabse bada karan tha.
                               key={job.job_id} 
                               onClick={() => setActiveId(job.job_id)}
-                              whileHover={{ scale: 1.01, y: -2 }}
-                              animate={isActive ? { borderColor: "#0a66c2", boxShadow: "0px 0px 20px rgba(10, 102, 194, 0.3)" } : { borderColor: "rgba(255,255,255,0.05)", boxShadow: "0px 2px 4px rgba(0,0,0,0.05)", y: 0 }}
-                              className={`bg-white dark:bg-[#112240] rounded-xl border p-5 cursor-pointer flex flex-col relative overflow-hidden transition-colors ${isActive ? 'z-10 border-[#0a66c2]' : 'border-gray-200 dark:border-white/5'}`}
+                              whileTap={{ scale: 0.98 }} // Mobile click feedback
+                              animate={isActive ? { borderColor: "#0a66c2" } : { borderColor: "rgba(255,255,255,0.05)" }}
+                              className={`bg-white dark:bg-[#112240] rounded-xl border p-5 cursor-pointer flex flex-col relative overflow-hidden transition-colors ${isActive ? 'z-10 border-[#0a66c2] shadow-lg' : 'border-gray-200 dark:border-white/5 shadow-sm'}`}
                             >
                               <div className="flex justify-between items-start mb-4">
                                   <img 
                                      src={job.employer_logo || "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg"} 
                                      alt="Logo" 
+                                     loading="lazy" // Lazy load images
                                      className="w-10 h-10 rounded-full shadow-sm object-contain bg-white p-1" 
                                      onError={(e) => (e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg")}
                                   />
@@ -203,17 +201,18 @@ export default function TwitterJobsPage() {
             </main>
           </div>
 
-          {/* 🔥 MOBILE FILTER DRAWER (SLIDE OVER) */}
+          {/* 🔥 MOBILE FILTER DRAWER (Optimized Animation) */}
           <AnimatePresence>
             {isFilterOpen && (
               <>
-                {/* Backdrop */}
+                {/* 🔥 OPTIMIZATION 2: Removed 'backdrop-blur-sm' */}
+                {/* Blur mobile GPU ko marta hai. Plain black/60 is faster. */}
                 <motion.div 
                    initial={{ opacity: 0 }}
                    animate={{ opacity: 1 }}
                    exit={{ opacity: 0 }}
                    onClick={() => setIsFilterOpen(false)}
-                   className="fixed inset-0 bg-black/60 z-[60] lg:hidden backdrop-blur-sm"
+                   className="fixed inset-0 bg-black/60 z-[60] lg:hidden"
                 />
                 
                 {/* Drawer */}
@@ -221,7 +220,9 @@ export default function TwitterJobsPage() {
                    initial={{ x: "100%" }}
                    animate={{ x: 0 }}
                    exit={{ x: "100%" }}
-                   transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                   // 🔥 OPTIMIZATION 3: 'Spring' animation hata kar 'Tween' use kiya
+                   // Ye physics calculate nahi karta, seedha animate karta hai.
+                   transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
                    className="fixed right-0 top-0 bottom-0 w-[80%] max-w-sm bg-white dark:bg-[#0A192F] z-[70] shadow-2xl lg:hidden flex flex-col"
                 >
                    <div className="p-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center bg-gray-50 dark:bg-white/5">
@@ -266,8 +267,6 @@ export default function TwitterJobsPage() {
           </AnimatePresence>
 
       </ProtectedOverlay>
-      {/* 🔥 WRAPPER END */}
-
     </div>
   );
 }
