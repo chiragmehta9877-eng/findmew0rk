@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 
 // --- 3D WAVE EFFECT (Smooth & Optimized) ---
 function WaveParticles({ color }: { color: string }) {
-  const ref = useRef<any>();
+  const ref = useRef<any>(null);
   
   // Generate a grid of points
   const particleCount = 2000;
