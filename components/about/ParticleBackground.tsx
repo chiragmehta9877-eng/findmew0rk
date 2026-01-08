@@ -1,0 +1,44 @@
+'use client';
+import React, { useRef, useState } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Points, PointMaterial } from '@react-three/drei';
+import * as random from 'maath/random/dist/maath-random.cjs';
+
+function Stars(props: any) {
+  const ref = useRef<any>();
+  
+  // 🔥 FIX 1: Size 5000 -> 6000 kiya (Divisible by 3 for x,y,z)
+  // 🔥 FIX 2: useState use kiya taaki bar-bar regenerate na ho
+  const [sphere] = useState(() => random.inSphere(new Float32Array(6000), { radius: 1.5 }));
+
+  useFrame((state, delta) => {
+    if (ref.current) {
+      ref.current.rotation.x -= delta / 10;
+      ref.current.rotation.y -= delta / 15;
+    }
+  });
+
+  return (
+    <group rotation={[0, 0, Math.PI / 4]}>
+      <Points ref={ref} positions={sphere} stride={3} frustumCulled={false} {...props}>
+        <PointMaterial
+          transparent
+          color="#0d9488" // Teal color to match FindMeWork theme
+          size={0.002}
+          sizeAttenuation={true}
+          depthWrite={false}
+        />
+      </Points>
+    </group>
+  );
+}
+
+export default function ParticleBackground() {
+  return (
+    <div className="absolute inset-0 z-0 h-full w-full pointer-events-none opacity-40 dark:opacity-60">
+      <Canvas camera={{ position: [0, 0, 1] }}>
+        <Stars />
+      </Canvas>
+    </div>
+  );
+}
