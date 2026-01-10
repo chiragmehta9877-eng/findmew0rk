@@ -25,13 +25,17 @@ export const authOptions: AuthOptions = {
     async signIn({ user }) {
       try {
         await connectToDB();
+        
+        // Safety check: Agar email hi nahi hai to login mat karne do
+        if (!user.email) return false;
+
         const existingUser = await User.findOne({ email: user.email });
 
         if (!existingUser) {
           await User.create({
-            name: user.name,
+            name: user.name || "User", // 🔥 FIX: Fallback string added
             email: user.email,
-            image: user.image,
+            image: user.image || "",   // 🔥 FIX: Fallback empty string added
             role: "user",
             bookmarks: [],
           });
