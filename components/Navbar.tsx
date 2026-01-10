@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession, signIn, signOut } from "next-auth/react";
-import { Menu, X, Zap, Linkedin, Twitter, Sun, Moon, Info, LogOut, User } from 'lucide-react';
+import { Menu, X, Zap, Linkedin, Twitter, Sun, Moon, Info, LogOut, User, LayoutDashboard } from 'lucide-react';
 
 export default function Navbar() {
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
+  // 1. THEME LOGIC
   useEffect(() => {
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       setIsDark(true);
@@ -18,6 +19,25 @@ export default function Navbar() {
       document.documentElement.classList.remove('dark');
     }
   }, []);
+
+  // 🔥🔥🔥 2. NEW: DATABASE SYNC LOGIC 🔥🔥🔥
+  // As soon as user logs in, save them to MongoDB
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      fetch('/api/auth/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: session.user.name || 'User',
+          email: session.user.email,
+          image: session.user.image
+        })
+      })
+      .then(res => res.json())
+      .then(data => console.log("✅ User Synced:", data))
+      .catch(err => console.error("❌ Sync Failed:", err));
+    }
+  }, [session, status]);
 
   const toggleTheme = () => {
     if (isDark) {
@@ -62,18 +82,26 @@ export default function Navbar() {
 
             {status === "authenticated" ? (
               <div className="flex items-center gap-3">
-                 <div className="text-right hidden lg:block">
-                    <p className="text-xs text-slate-500 dark:text-gray-400">Welcome,</p>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{session.user?.name}</p>
-                 </div>
-                 {session.user?.image ? (
-                   <img src={session.user.image} alt="User" className="w-9 h-9 rounded-full border border-gray-200 dark:border-white/10" />
-                 ) : (
-                   <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white"><User size={18}/></div>
-                 )}
-                 <button onClick={() => signOut()} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Logout">
-                   <LogOut size={20} />
-                 </button>
+                  
+                  {/* Dashboard Link (For easy access) */}
+                  <Link href="/dashboard" className="hidden lg:flex items-center gap-1 bg-purple-50 text-purple-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-purple-100 transition-colors">
+                     <LayoutDashboard size={14}/> Dashboard
+                  </Link>
+
+                  <div className="text-right hidden lg:block">
+                     <p className="text-xs text-slate-500 dark:text-gray-400">Welcome,</p>
+                     <p className="text-sm font-bold text-slate-900 dark:text-white max-w-[100px] truncate">{session.user?.name}</p>
+                  </div>
+                  
+                  {session.user?.image ? (
+                    <img src={session.user.image} alt="User" className="w-9 h-9 rounded-full border border-gray-200 dark:border-white/10" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white"><User size={18}/></div>
+                  )}
+                  
+                  <button onClick={() => signOut()} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Logout">
+                    <LogOut size={20} />
+                  </button>
               </div>
             ) : (
               <button onClick={() => signIn()} className="bg-slate-900 dark:bg-white text-white dark:text-[#0A192F] px-5 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity shadow-md">
@@ -96,7 +124,7 @@ export default function Navbar() {
 
       {/* MOBILE MENU DROPDOWN */}
       {isOpen && (
-        <div className="md:hidden bg-white dark:bg-[#0A192F] border-b border-gray-200 dark:border-white/10 shadow-xl">
+        <div className="md:hidden bg-white dark:bg-[#0A192F] border-b border-gray-200 dark:border-white/10 shadow-xl animate-in slide-in-from-top-5 duration-200">
           <div className="px-4 pt-2 pb-6 space-y-2">
             <Link href="/" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-teal-600">Home</Link>
             <Link href="/linkedin-jobs" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"><Linkedin size={18} /> LinkedIn Feeds</Link>
@@ -119,6 +147,10 @@ export default function Navbar() {
                       </div>
                    </div>
                    
+                   <Link href="/dashboard" onClick={() => setIsOpen(false)} className="flex items-center justify-center gap-2 w-full bg-purple-50 text-purple-700 py-3 rounded-xl font-bold mb-3 hover:bg-purple-100 transition-colors">
+                      <LayoutDashboard size={18} /> Go to Dashboard
+                   </Link>
+
                    <button onClick={() => signOut()} className="w-full bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
                      <LogOut size={18} /> Sign Out
                    </button>

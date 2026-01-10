@@ -8,20 +8,18 @@ import {
 import Navbar from '@/components/Navbar';
 
 export default function TwitterJobDetails() {
-  // 1. Get ID correctly
   const { id } = useParams();
   const router = useRouter();
 
-  // 2. Define State
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false); // <--- Added this missing state
+  const [error, setError] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!id) return; // Guard clause
+    if (!id) return;
 
-    // 3. Fix: Use 'id' instead of 'params.id'
+    // 1. Fetch Job Data
     fetch(`/api/jobs/${id}`)
       .then((res) => res.json())
       .then((data) => {
@@ -37,6 +35,14 @@ export default function TwitterJobDetails() {
         setError(true);
         setLoading(false);
       });
+
+    // 🔥 2. TRACK VIEW (Background Call)
+    // Jaise hi page load hoga, database me view count +1 ho jayega
+    fetch('/api/track', {
+        method: 'POST',
+        body: JSON.stringify({ jobId: id, type: 'view' })
+    }).catch(err => console.error("View track failed", err));
+
   }, [id]);
 
   const handleCopyLink = () => {
@@ -46,6 +52,18 @@ export default function TwitterJobDetails() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  // 🔥 3. TRACK CLICK HANDLER
+  // Jab user button dabayega, tab database me click count +1 hoga
+  const handleApplyClick = () => {
+    fetch('/api/track', {
+        method: 'POST',
+        body: JSON.stringify({ jobId: id, type: 'click' })
+    }).catch(err => console.error("Click track failed", err));
+  };
+
+  // Smart Link Logic
+  const applyUrl = job ? (job.link || job.apply_link || job.job_url || job.url || '#') : '#';
 
   if (loading) return (
     <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0A192F]">
@@ -58,7 +76,7 @@ export default function TwitterJobDetails() {
 
   if (error || !job) return (
     <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0A192F] flex flex-col items-center justify-center">
-      <h2 className="text-2xl font-bold text-gray-400">Tweet Not Found 😕</h2>
+      <h2 className="text-2xl font-bold text-gray-400">Tweet Not Found</h2>
       <button onClick={() => router.back()} className="mt-4 text-[#0a66c2] hover:underline">Go Back</button>
     </div>
   );
@@ -84,29 +102,28 @@ export default function TwitterJobDetails() {
             
             {/* Header Card */}
             <div className="bg-white dark:bg-[#112240] rounded-2xl border border-gray-200 dark:border-white/5 shadow-sm overflow-hidden relative">
-              {/* Cover Gradient */}
               <div className="h-32 bg-gradient-to-r from-gray-800 to-gray-600"></div>
               
               <div className="px-6 pb-6">
                 <div className="flex flex-col sm:flex-row gap-5 -mt-10 items-start">
-                   <div className="w-20 h-20 rounded-xl bg-white p-1 shadow-lg border border-gray-100 dark:border-white/5 flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-xl bg-white p-1 shadow-lg border border-gray-100 dark:border-white/5 flex items-center justify-center">
                       <img 
                         src={job.employer_logo || "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg"} 
                         className="w-full h-full object-contain rounded-lg"
                         onError={(e) => (e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg")}
                       />
-                   </div>
-                   
-                   <div className="pt-2 sm:pt-12 flex-1">
+                    </div>
+                    
+                    <div className="pt-2 sm:pt-12 flex-1">
                       <h1 className="text-2xl sm:text-3xl font-bold leading-tight mb-2">{job.job_title}</h1>
                       <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600 dark:text-gray-300">
-                         <span className="font-semibold text-slate-900 dark:text-white flex items-center gap-1">
-                           <Twitter size={14} className="text-black dark:text-white"/> @{job.employer_name || "TwitterUser"}
-                         </span>
-                         <span className="flex items-center gap-1"><MapPin size={14}/> Remote / Global</span>
-                         <span className="flex items-center gap-1"><Clock size={14}/> Posted recently</span>
+                          <span className="font-semibold text-slate-900 dark:text-white flex items-center gap-1">
+                            <Twitter size={14} className="text-black dark:text-white"/> @{job.employer_name || "TwitterUser"}
+                          </span>
+                          <span className="flex items-center gap-1"><MapPin size={14}/> Remote / Global</span>
+                          <span className="flex items-center gap-1"><Clock size={14}/> Posted recently</span>
                       </div>
-                   </div>
+                    </div>
                 </div>
               </div>
             </div>
@@ -140,19 +157,23 @@ export default function TwitterJobDetails() {
                   </div>
                </div>
 
+               {/* 🔥 OPEN THREAD BUTTON (With Tracking) */}
                <a 
-                 href={job.link} 
+                 href={applyUrl} 
                  target="_blank" 
                  rel="noopener noreferrer"
-                 className="block w-full bg-black dark:bg-white text-white dark:text-black text-center font-bold py-3 rounded-xl transition-all shadow-lg hover:opacity-80 mb-3"
+                 onClick={handleApplyClick} // <--- Ye line click count badhayegi
+                 className="block w-full bg-black dark:bg-white text-white dark:text-black text-center font-bold py-3 rounded-xl transition-all shadow-lg hover:opacity-80 mb-3 cursor-pointer"
                >
                  Open Thread 🚀
                </a>
                
+               {/* 🔥 VISIT WEBSITE BUTTON (With Tracking) */}
                <a 
-                 href={job.link} 
+                 href={applyUrl} 
                  target="_blank" 
                  rel="noopener noreferrer"
+                 onClick={handleApplyClick} // <--- Ye line click count badhayegi
                  className="flex items-center justify-center gap-2 w-full border border-gray-200 dark:border-white/10 text-slate-700 dark:text-gray-300 font-bold py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                >
                  Visit Website <Globe size={16}/>
