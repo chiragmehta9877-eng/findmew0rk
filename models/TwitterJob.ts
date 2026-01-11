@@ -1,4 +1,4 @@
-import mongoose, { Schema, Model } from "react";
+import mongoose, { Schema, Model } from "mongoose"; // ✅ Fixed: Changed 'react' to 'mongoose'
 
 const TwitterJobSchema = new Schema({
   job_title: { type: String, required: true },
