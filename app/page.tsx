@@ -1,12 +1,13 @@
 'use client';
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // 🔥 Import useRouter
 import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import { Briefcase, Bell, Globe, Cpu, Target, Shield, Layers, ArrowRight, CheckCircle, Zap } from 'lucide-react';
 import Navbar from '@/components/Navbar'; 
 import JobHologram from '@/components/home/JobHologram';
 import HeroSearch from '@/components/home/HeroSearch'; 
-import { useSession } from 'next-auth/react'; // 🔥 Import added
+import { useSession } from 'next-auth/react'; 
 
 // --- Animation Variants ---
 const fadeInUp: Variants = {
@@ -26,13 +27,14 @@ const staggerContainer: Variants = {
 
 export default function HomePage() {
   
-  // 🔥 Auth Check
+  // 🔥 Auth Check & Router
   const { status } = useSession();
+  const router = useRouter(); // 🔥 Router Hook
 
   // --- Parallax Setup ---
   const ref = useRef(null);
   
-  // Mobile Check to disable heavy scroll listeners
+  // Mobile Check
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     if (window.innerWidth < 768) setIsMobile(true);
@@ -45,6 +47,14 @@ export default function HomePage() {
 
   // Desktop only parallax
   const yBackground = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+
+  // 🔥 NEW FUNCTION: Handle Search and Redirect
+  const handleHomeSearch = (query: string) => {
+    if (query.trim()) {
+      // Redirect to x-jobs page with search query parameter
+      router.push(`/x-jobs?search=${encodeURIComponent(query)}`);
+    }
+  };
 
   return (
     <div ref={ref} className="min-h-screen transition-colors duration-300 bg-slate-50 text-slate-900 dark:bg-[#0A192F] dark:text-white font-sans overflow-x-hidden selection:bg-teal-400 selection:text-[#0A192F]">
@@ -80,7 +90,6 @@ export default function HomePage() {
             >
               
               <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100/50 border border-teal-200 text-teal-700 dark:bg-teal-400/5 dark:border-teal-400/20 dark:text-teal-400 text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-sm">
-                {/* Ping removed on mobile to save battery */}
                 <span className="w-2 h-2 bg-teal-600 dark:bg-teal-400 rounded-full md:animate-ping"></span>
                 <span className="w-2 h-2 bg-teal-600 dark:bg-teal-400 rounded-full absolute md:hidden"></span>
                 System Online: Scanning Feeds
@@ -98,11 +107,12 @@ export default function HomePage() {
               </motion.p>
 
               <motion.div variants={fadeInUp} className="w-full">
-                <HeroSearch />
+                {/* 🔥 Pass the handler to HeroSearch */}
+                <HeroSearch onSearch={handleHomeSearch} />
               </motion.div>
 
               <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 w-full lg:w-auto mt-6">
-                <Link href="/twitter-jobs" className="w-full sm:w-auto px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white dark:bg-teal-400 dark:text-[#0A192F] font-bold rounded-xl dark:hover:bg-white transition-all transform hover:-translate-y-1 shadow-xl shadow-teal-500/20 flex items-center justify-center gap-2">
+                <Link href="/x-jobs" className="w-full sm:w-auto px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white dark:bg-teal-400 dark:text-[#0A192F] font-bold rounded-xl dark:hover:bg-white transition-all transform hover:-translate-y-1 shadow-xl shadow-teal-500/20 flex items-center justify-center gap-2">
                   <Briefcase size={20} /> Find Work Now
                 </Link>
                 
@@ -148,7 +158,7 @@ export default function HomePage() {
           <motion.div 
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }} // Margin kam kiya
+            viewport={{ once: true, margin: "-50px" }} 
             variants={fadeInUp}
             className="text-center max-w-3xl mx-auto mb-16"
           >
@@ -214,10 +224,8 @@ export default function HomePage() {
           className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"
         ></motion.div>
 
-        {/* FIX 1: Max-width 7xl aur px-6/12 add kiya taaki content screen edges se door rahe */}
         <div className="container mx-auto px-6 md:px-12 lg:px-8 max-w-7xl relative z-10">
           
-          {/* FIX 2: Gap badhaya (gap-12 se gap-16/24) taaki Text aur Cards alag-alag dikhein */}
           <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 items-center">
             
             {/* Left Column */}
@@ -236,7 +244,7 @@ export default function HomePage() {
                 Most job boards are graveyards. FindMeWork connects you to opportunities that are alive, urgent, and often unlisted.
               </p>
               
-              <ul className="space-y-6"> {/* List items ke beech space badhaya */}
+              <ul className="space-y-6"> 
                 {[
                   "Real-time updates every 15 minutes",
                   "Filter by Tech Stack (React, Node, Python)",
@@ -266,7 +274,6 @@ export default function HomePage() {
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              // FIX 3: Grid gap badhaya (gap-4 se gap-6) taaki cards apas me na chipkein
               className="lg:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-6"
             >
                <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5">
@@ -275,7 +282,6 @@ export default function HomePage() {
                   <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">We auto-block recruiters and agencies. Only direct company posts.</p>
                </div>
                
-               {/* Margin Top badhaya staggered look ke liye */}
                <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 sm:mt-12">
                   <Layers size={32} className="text-blue-500 mb-4" />
                   <h4 className="font-bold text-xl dark:text-white mb-3">Smart Sorting</h4>

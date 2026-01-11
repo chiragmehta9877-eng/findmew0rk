@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// 🔥 Custom X Logo
+// Custom X Logo
 const XLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -25,8 +25,6 @@ export default function DashboardPage() {
 
   const [savedJobs, setSavedJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // 🔥 UPDATED: LIMIT 5 JOBS PER PAGE
   const [currentPage, setCurrentPage] = useState(1);
   const JOBS_PER_PAGE = 5;
 
@@ -35,9 +33,10 @@ export default function DashboardPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
   
-  const [profileData, setProfileData] = useState({
+  const [profileData, setProfileData] = useState<any>({
     headline: '',
     location: '',
+    detectedLocation: '', 
     lookingFor: '', 
     linkedin: '',
     x_handle: '',
@@ -46,19 +45,19 @@ export default function DashboardPage() {
   
   const [completion, setCompletion] = useState(20);
 
-  // 1. AUTH CHECK
+  // AUTH CHECK
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/'); 
   }, [status, router]);
 
-  // 2. FETCH DATA
+  // FETCH DATA
   useEffect(() => {
     if (status === 'authenticated') {
-        fetch('/api/user/profile')
+        fetch(`/api/user/profile?t=${Date.now()}`)
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    setProfileData(prev => ({ ...prev, ...data.data }));
+                    setProfileData((prev: any) => ({ ...prev, ...data.data }));
                 }
             })
             .catch(err => console.error("Profile Error:", err));
@@ -67,7 +66,8 @@ export default function DashboardPage() {
             .then(res => res.json())
             .then(data => {
                 if (data.success && Array.isArray(data.data)) {
-                    const validJobs = data.data.filter((j: any) => j && (j._id || j.job_id));
+                    // Filter out null/invalid entries
+                    const validJobs = data.data.filter((j: any) => j && (j.job_id || j._id));
                     setSavedJobs(validJobs);
                 }
                 setLoading(false);
@@ -79,19 +79,22 @@ export default function DashboardPage() {
     }
   }, [status]);
 
-  // 3. CALCULATE COMPLETION
+  // CALCULATION LOGIC
   useEffect(() => {
+    const isFilled = (val: string | null | undefined) => val && val.toString().trim().length > 0;
+
     let score = 20; 
-    if (profileData.headline) score += 15;
-    if (profileData.location) score += 10;
-    if (profileData.lookingFor) score += 15;
-    if (profileData.linkedin) score += 15;
-    if (profileData.x_handle) score += 15;
-    if (profileData.instagram) score += 10;
+    if (isFilled(profileData.headline)) score += 15;
+    if (isFilled(profileData.location) || isFilled(profileData.detectedLocation)) score += 10;
+    if (isFilled(profileData.lookingFor)) score += 15;
+    if (isFilled(profileData.linkedin)) score += 15;
+    if (isFilled(profileData.x_handle)) score += 15;
+    if (isFilled(profileData.instagram)) score += 10;
+    
     setCompletion(Math.min(score, 100));
   }, [profileData]);
 
-  // 4. PAGINATION LOGIC
+  // PAGINATION
   const indexOfLastJob = currentPage * JOBS_PER_PAGE;
   const indexOfFirstJob = indexOfLastJob - JOBS_PER_PAGE;
   const currentJobs = savedJobs.slice(indexOfFirstJob, indexOfLastJob);
@@ -101,12 +104,19 @@ export default function DashboardPage() {
     if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
   }, [savedJobs.length, totalPages, currentPage]);
 
-  // 5. REMOVE BOOKMARK
+  // 🔥 FIX: DELETE FUNCTION
   const removeBookmark = async (e: React.MouseEvent, idToDelete: string) => {
     e.preventDefault(); 
     e.stopPropagation(); 
+    
     const previousJobs = [...savedJobs];
-    setSavedJobs((prev) => prev.filter((job) => (job._id || job.job_id || job).toString() !== idToDelete.toString()));
+
+    // Optimistic Update: UI se turant hatao
+    setSavedJobs((prev) => prev.filter((job) => {
+        // Check BOTH job_id (Correct) and _id (Fallback)
+        const currentId = job.job_id || job._id;
+        return currentId.toString() !== idToDelete.toString();
+    }));
 
     try {
         const res = await fetch('/api/bookmarks', {
@@ -116,13 +126,14 @@ export default function DashboardPage() {
         });
         if (!res.ok) throw new Error("Failed");
     } catch (err) {
-        setSavedJobs(previousJobs);
+        setSavedJobs(previousJobs); // Error aane par wapas lagao
+        alert("Failed to delete. Please try again.");
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setProfileData(prev => ({ ...prev, [name]: value }));
+    setProfileData((prev: any) => ({ ...prev, [name]: value }));
   };
 
   const handleSaveProfile = async () => {
@@ -135,9 +146,7 @@ export default function DashboardPage() {
           });
           
           if (res.ok) {
-              // 🔥🔥 TRIGGER NAVBAR UPDATE 🔥🔥
               window.dispatchEvent(new Event('profileUpdated'));
-
               setIsEditing(false);
               setShowToast(true);
               setTimeout(() => setShowToast(false), 3000);
@@ -222,7 +231,8 @@ export default function DashboardPage() {
                         )}
 
                         <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 flex items-center gap-1 justify-center">
-                            {profileData.location && <MapPin size={12}/>} {profileData.location}
+                            <MapPin size={12}/> 
+                            {profileData.location ? profileData.location : (profileData.detectedLocation ? `${profileData.detectedLocation} (Auto)` : "Add Location")}
                         </p>
 
                         <button 
@@ -245,7 +255,6 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Social Media Links */}
                 <div className="bg-white dark:bg-[#112240] rounded-3xl p-6 border border-gray-200 dark:border-white/5 shadow-sm">
                     <h3 className="font-bold text-lg mb-4 flex items-center gap-2">Social Profiles</h3>
                     <div className="space-y-3">
@@ -273,13 +282,21 @@ export default function DashboardPage() {
                     <div className="flex flex-col gap-4">
                         <AnimatePresence mode="popLayout">
                             {currentJobs.map((job, index) => {
-                                const jobId = job._id || job.job_id || `job-${index}`;
-                                const jobUrl = job.source === 'twitter' ? `/x-jobs/${jobId}` : `/linkedin-jobs/${jobId}`;
+                                // 🔥 FIX: ID LOGIC
+                                // 1. React Key ke liye DB ID (_id) use karo (unique hoti hai)
+                                // 2. URL/Delete ke liye Job ID (job_id) use karo (API iski umeed karti hai)
+                                const dbId = job._id || index;
+                                const realJobId = job.job_id;
+                                
+                                // Agar job_id nahi hai (purana data/corruption), to fallback _id use karo
+                                const idForAction = realJobId || job._id; 
+
+                                const jobUrl = job.source === 'twitter' ? `/x-jobs/${idForAction}` : `/linkedin-jobs/${idForAction}`;
+                                
                                 return (
-                                <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} key={jobId} onClick={() => router.push(jobUrl)} className="group relative bg-white dark:bg-[#112240] p-5 rounded-2xl border border-gray-200 dark:border-white/5 hover:border-teal-500/50 dark:hover:border-teal-500/50 transition-all shadow-sm hover:shadow-lg cursor-pointer">
+                                <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} key={dbId} onClick={() => router.push(jobUrl)} className="group relative bg-white dark:bg-[#112240] p-5 rounded-2xl border border-gray-200 dark:border-white/5 hover:border-teal-500/50 dark:hover:border-teal-500/50 transition-all shadow-sm hover:shadow-lg cursor-pointer">
                                     <div className="flex items-start gap-4 relative z-10">
                                         
-                                        {/* 🔥 UPDATED LOGO CONTAINER: White BG in Dark Mode */}
                                         <div className="w-16 h-16 rounded-xl bg-slate-50 dark:bg-white p-2 flex items-center justify-center border border-gray-100 dark:border-white/5 shrink-0">
                                             <img src={job.employer_logo || "/fallback-job.png"} className="w-full h-full object-contain" onError={(e) => (e.currentTarget.src = "/fallback-job.png")} />
                                         </div>
@@ -287,8 +304,10 @@ export default function DashboardPage() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start">
                                                 <h4 className="font-bold text-lg text-slate-900 dark:text-white truncate pr-2">{job.job_title || "Unknown Title"}</h4>
+                                                
+                                                {/* DELETE BUTTON: Ab ye 'idForAction' bhejeaga jo ki sahi ID hai */}
                                                 <button 
-                                                    onClick={(e) => removeBookmark(e, jobId)} 
+                                                    onClick={(e) => removeBookmark(e, idForAction)} 
                                                     className="p-2 -mt-2 -mr-2 text-slate-400 dark:text-white hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors z-20 cursor-pointer"
                                                 >
                                                     <Trash2 size={18} />

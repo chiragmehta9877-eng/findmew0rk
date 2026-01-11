@@ -26,22 +26,6 @@ function WaveParticles({ color }: { color: string }) {
     if (ref.current) {
       const time = state.clock.getElapsedTime();
       
-      // Gentle Wave Animation
-      for (let i = 0; i < particleCount; i++) {
-        const x = positions[i * 3];
-        const z = positions[i * 3 + 2];
-        
-        // Y position changes based on Time, X and Z (creating a wave)
-        // We update the 'y' coordinate in the geometry directly
-        // Note: Doing this per-frame on CPU for 2000 points is fine for modern devices.
-        // For heavier loads, we'd use shaders, but this keeps code simple.
-        
-        // Resetting logic approach for React Three Fiber (ref usage)
-        // Accessing the geometry directly is faster
-        // But for simplicity in this snippet, we will rotate the whole group slightly
-        // creating a "Floating" effect instead of complex wave to ensure 60FPS.
-      }
-      
       // Rotate the whole cloud slowly
       ref.current.rotation.y = time * 0.05;
       ref.current.rotation.z = Math.sin(time * 0.1) * 0.1;
@@ -69,9 +53,10 @@ interface JobHeroProps {
   subtitle: string;
   placeholder: string;
   themeColor: string; // Hex code for particles
+  onSearch?: (query: string) => void; // 🔥 Added functional prop
 }
 
-export default function JobHero({ title, subtitle, placeholder, themeColor }: JobHeroProps) {
+export default function JobHero({ title, subtitle, placeholder, themeColor, onSearch }: JobHeroProps) {
   return (
     <div className="relative w-full h-[400px] flex flex-col items-center justify-center text-center overflow-hidden mb-8">
       
@@ -117,6 +102,7 @@ export default function JobHero({ title, subtitle, placeholder, themeColor }: Jo
              <input 
                type="text" 
                placeholder={placeholder}
+               onChange={(e) => onSearch && onSearch(e.target.value)} // 🔥 Connected input to search function
                className="w-full bg-transparent text-lg px-4 py-3 outline-none text-slate-800 dark:text-white placeholder-gray-500 font-medium"
              />
              <button 

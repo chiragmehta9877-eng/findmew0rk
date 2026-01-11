@@ -1,13 +1,14 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react'; // Suspense added
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation'; // 🔥 Import added for URL reading
 import { MapPin, ArrowRight, Filter, ChevronLeft, ChevronRight, X, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar'; 
 import JobHero from '@/components/JobHero'; 
 import ProtectedOverlay from '@/components/ProtectedOverlay'; 
 
-// 🔥 OFFICIAL X LOGO COMPONENT
+// OFFICIAL X LOGO COMPONENT
 const XLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -29,15 +30,31 @@ const filterSections = [
 
 const ITEMS_PER_PAGE = 12;
 
-export default function XJobsPage() {
-  const [jobs, setJobs] = useState<any[]>([]);
+// 🔥 Content Component (Separated for Suspense)
+function XJobsContent() {
+  const searchParams = useSearchParams(); // 🔥 URL Parameters Hook
+  
+  const [jobs, setJobs] = useState<any[]>([]); 
+  const [filteredJobs, setFilteredJobs] = useState<any[]>([]); 
+
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  
   const [selectedCategory, setSelectedCategory] = useState("job");
+  const [searchQuery, setSearchQuery] = useState(""); 
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
+
+  // 1. URL CHECK ON LOAD
+  useEffect(() => {
+    const queryFromUrl = searchParams.get('search');
+    if (queryFromUrl) {
+        setSearchQuery(queryFromUrl); // 🔥 Agar URL me search hai, toh state update karo
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const checkIsMobile = () => setIsMobile(window.innerWidth < 768);
@@ -48,15 +65,19 @@ export default function XJobsPage() {
   
   const jobsHeadingRef = useRef<HTMLDivElement>(null);
 
+  // 2. FETCH API
   const fetchJobs = (category: string) => {
     setLoading(true);
     setCurrentPage(1);
+    // Note: Hum yahan searchQuery reset nahi kar rahe taaki URL wala search bana rahe
     
-    // Backend source 'twitter' hi rahega
     fetch(`/api/jobs?source=twitter&category=${category}`)
       .then(res => res.json())
       .then(data => {
-         if(data.success) setJobs(data.data);
+         if(data.success) {
+            setJobs(data.data);
+            setFilteredJobs(data.data); 
+         }
          setLoading(false);
       })
       .catch(err => {
@@ -69,6 +90,26 @@ export default function XJobsPage() {
     fetchJobs(selectedCategory);
   }, [selectedCategory]);
 
+
+  // 3. FILTER LOGIC (Triggered by searchQuery change)
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+        setFilteredJobs(jobs);
+    } else {
+        const query = searchQuery.toLowerCase();
+        const filtered = jobs.filter(job => 
+            (job.job_title && job.job_title.toLowerCase().includes(query)) ||
+            (job.employer_name && job.employer_name.toLowerCase().includes(query)) ||
+            (job.text && job.text.toLowerCase().includes(query)) ||
+            (job.work_mode && job.work_mode.toLowerCase().includes(query)) ||
+            (job.country && job.country.toLowerCase().includes(query))
+        );
+        setFilteredJobs(filtered);
+    }
+    setCurrentPage(1);
+  }, [searchQuery, jobs]);
+
+
   useEffect(() => {
     if (jobsHeadingRef.current) {
       jobsHeadingRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -80,23 +121,24 @@ export default function XJobsPage() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const totalPages = Math.ceil(jobs.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentJobs = jobs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const currentJobs = filteredJobs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const goToNextPage = () => { if (currentPage < totalPages) setCurrentPage(curr => curr + 1); };
   const goToPrevPage = () => { if (currentPage > 1) setCurrentPage(curr => curr - 1); };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0A192F] text-slate-900 dark:text-white font-sans relative">
-      <Navbar />
-      
-      <ProtectedOverlay>
+    <ProtectedOverlay>
           <JobHero 
               title="X Community Jobs" 
               subtitle="Verified hiring posts with direct email application."
               placeholder="Search 'Remote', 'Email', or 'Hiring'..."
               themeColor="#ffffff" 
+              // 🔥 Set initial value from state (which came from URL)
+              // Note: JobHero input needs value={searchQuery} support ideally, 
+              // but purely onSearch works if user types new things.
+              onSearch={(val: string) => setSearchQuery(val)}
           />
 
           <div className="container mx-auto px-4 pb-20 flex flex-col lg:flex-row gap-8">
@@ -104,7 +146,7 @@ export default function XJobsPage() {
               <div className="bg-white dark:bg-[#112240] rounded-xl border border-gray-200 dark:border-white/5 shadow-sm sticky top-24 overflow-hidden">
                   <div className="p-5 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-white/5">
                      <h3 className="font-bold text-base flex items-center gap-2"><Filter size={16} /> Filters</h3>
-                     <span className="text-xs text-blue-600 cursor-pointer hover:underline" onClick={() => setSelectedCategory("job")}>Reset</span>
+                     <span className="text-xs text-blue-600 cursor-pointer hover:underline" onClick={() => { setSelectedCategory("job"); setSearchQuery(""); }}>Reset</span>
                   </div>
                   <div className="p-5 space-y-3">
                     {filterSections[0].items.map((item, i) => (
@@ -127,12 +169,12 @@ export default function XJobsPage() {
                </button>
 
                <div ref={jobsHeadingRef} className="flex items-center justify-between mb-6 pt-2">
-                  {/* 🔥 UPDATED HERE: Removed Lucide X, Added XLogo SVG */}
                   <h1 className="text-2xl font-bold flex items-center gap-2 uppercase tracking-tight">
-                    <XLogo className="w-6 h-6 text-black dark:text-white" /> {selectedCategory} Threads
+                    <XLogo className="w-6 h-6 text-black dark:text-white" /> 
+                    {searchQuery ? `Results for "${searchQuery}"` : `${selectedCategory} Threads`}
                   </h1>
                   <p className="text-slate-500 dark:text-gray-400 text-sm">
-                    {loading ? "Filtering..." : `${jobs.length} verified posts`}
+                    {loading ? "Loading..." : `${filteredJobs.length} results found`}
                   </p>
                </div>
 
@@ -142,6 +184,12 @@ export default function XJobsPage() {
                  </div>
                ) : (
                  <>
+                   {filteredJobs.length === 0 ? (
+                       <div className="text-center py-20">
+                           <p className="text-slate-500 text-lg">No jobs found matching "{searchQuery}" in this category.</p>
+                           <button onClick={() => setSearchQuery("")} className="mt-4 text-blue-600 font-bold hover:underline">Clear Search</button>
+                       </div>
+                   ) : (
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
                       {currentJobs.map((job) => {
                           const isActive = activeId === job.job_id;
@@ -206,8 +254,9 @@ export default function XJobsPage() {
                           );
                       })}
                    </div>
+                   )}
 
-                   {jobs.length > ITEMS_PER_PAGE && (
+                   {filteredJobs.length > ITEMS_PER_PAGE && (
                      <div className="flex justify-center items-center gap-4 mt-10">
                         <button onClick={goToPrevPage} disabled={currentPage === 1} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-[#112240] border border-gray-200 dark:border-white/10 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 font-medium text-sm"><ChevronLeft size={16} /> Previous</button>
                         <span className="text-sm font-bold text-slate-600 dark:text-gray-400">Page {currentPage} of {totalPages}</span>
@@ -242,8 +291,18 @@ export default function XJobsPage() {
               </>
             )}
           </AnimatePresence>
+    </ProtectedOverlay>
+  );
+}
 
-      </ProtectedOverlay>
+// 🔥 Wrap in Suspense (Mandatory for useSearchParams in Next.js)
+export default function XJobsPage() {
+  return (
+    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0A192F] text-slate-900 dark:text-white font-sans relative">
+      <Navbar />
+      <Suspense fallback={<div className="text-center py-20 text-white">Loading Search...</div>}>
+         <XJobsContent />
+      </Suspense>
     </div>
   );
 }
