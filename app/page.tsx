@@ -6,11 +6,12 @@ import { Briefcase, Bell, Globe, Cpu, Target, Shield, Layers, ArrowRight, CheckC
 import Navbar from '@/components/Navbar'; 
 import JobHologram from '@/components/home/JobHologram';
 import HeroSearch from '@/components/home/HeroSearch'; 
+import { useSession } from 'next-auth/react'; // 🔥 Import added
 
 // --- Animation Variants ---
 const fadeInUp: Variants = {
-  hidden: { opacity: 0, y: 40 }, // Y value kam kiya taaki rendering fast ho
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } } // Duration kam ki
+  hidden: { opacity: 0, y: 40 }, 
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } } 
 };
 
 const staggerContainer: Variants = {
@@ -18,13 +19,16 @@ const staggerContainer: Variants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1 // Stagger fast kiya
+      staggerChildren: 0.1 
     }
   }
 };
 
 export default function HomePage() {
   
+  // 🔥 Auth Check
+  const { status } = useSession();
+
   // --- Parallax Setup ---
   const ref = useRef(null);
   
@@ -83,7 +87,7 @@ export default function HomePage() {
               </motion.div>
               
               <motion.h1 variants={fadeInUp} className="text-5xl lg:text-7xl font-bold text-slate-900 dark:text-white leading-[1.1] tracking-tight mb-6">
-                Find jobs <br/>
+                Find work <br/>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 dark:from-teal-400 dark:via-blue-400 dark:to-purple-500 animate-gradient-x">
                   Hidden in the Noise.
                 </span>
@@ -322,8 +326,11 @@ export default function HomePage() {
             </p>
             
             <div className="inline-block hover:scale-105 transition-transform">
-              <Link href="/login" className="px-10 py-4 bg-white text-teal-700 font-bold rounded-xl shadow-xl hover:bg-gray-100 transition-colors w-full sm:w-auto inline-flex items-center gap-2">
-                Get Started for Free <Zap size={20} className="fill-current" />
+              <Link 
+                href={status === 'authenticated' ? "/x-jobs" : "/login"} 
+                className="px-10 py-4 bg-white text-teal-700 font-bold rounded-xl shadow-xl hover:bg-gray-100 transition-colors w-full sm:w-auto inline-flex items-center gap-2"
+              >
+                {status === 'authenticated' ? "Browse Jobs" : "Get Started for Free"} <Zap size={20} className="fill-current" />
               </Link>
             </div>
          </div>

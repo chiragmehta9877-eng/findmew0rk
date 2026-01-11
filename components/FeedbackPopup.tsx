@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion'; // 🔥 Imported Framer Motion
+import { motion, AnimatePresence } from 'framer-motion'; 
 import { X, Megaphone, ArrowRight, Zap, Radio } from 'lucide-react';
 
 export default function FeedbackPopup() {
@@ -38,25 +38,29 @@ export default function FeedbackPopup() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm"
         >
           
           {/* POSTER CARD CONTAINER */}
           <motion.div 
-            // 🔥 SMOOTH POP ANIMATION (Spring Physics)
-            initial={{ opacity: 0, scale: 0.5, y: 100 }}
+            // 🔥 OPTIMIZED FOR MOBILE: 
+            // Scale 0.5 se 0.95 kar diya taaki rendering smooth ho.
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ 
                 type: "spring", 
-                stiffness: 400, 
-                damping: 25, 
-                mass: 0.5 
+                stiffness: 300, // Thoda soft kar diya
+                damping: 30,    // Jhatka kam lagega
+                mass: 1         // Solid feel aayega
             }}
+            // 🔥 GPU Optimization
+            style={{ willChange: "transform, opacity" }} 
             className="relative group w-full max-w-3xl"
           >
             
-            {/* Glow Effect behind (Optimized opacity for performance) */}
+            {/* Glow Effect behind */}
             <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 via-blue-600 to-purple-600 rounded-[1.3rem] blur-lg opacity-30 group-hover:opacity-50 transition duration-1000"></div>
             
             {/* Main Content Container */}
@@ -77,7 +81,7 @@ export default function FeedbackPopup() {
                         {/* ================= LEFT SIDE: GRAPHIC ART ================= */}
                         <div className="w-full md:w-5/12 h-56 md:h-auto bg-[#0A192F] relative overflow-hidden flex items-center justify-center p-6">
                             
-                            {/* Optimized Cyber Grid (Static CSS) */}
+                            {/* Optimized Cyber Grid */}
                             <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
                             
                             {/* Abstract Glows */}

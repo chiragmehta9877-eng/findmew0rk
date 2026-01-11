@@ -1,7 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Zap, Linkedin, Twitter, Mail, Heart } from 'lucide-react';
+import { Zap, Linkedin, Mail, Heart, GraduationCap } from 'lucide-react';
+
+// 🔥 OFFICIAL X LOGO COMPONENT
+const XLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -15,22 +22,49 @@ export default function Footer() {
           
           {/* COLUMN 1: Brand & Desc */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center text-white shadow-lg shadow-teal-500/30 group-hover:scale-110 transition-transform">
-                <Zap size={18} fill="currentColor" />
-              </div>
-              <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                FindMeWork
-              </span>
+            
+            {/* 🔥 LOGO - FindMeW0rk (Sexy Student Style) */}
+            <Link href="/" className="flex items-center gap-2 group select-none">
+                <div className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center text-white shadow-lg shadow-teal-500/30 group-hover:scale-110 transition-transform duration-300">
+                  <Zap size={18} fill="currentColor" />
+                </div>
+                
+                <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center">
+                  FindMeW
+                  {/* ✨ THE SEXY '0' WITH STUDENT CAP ✨ */}
+                  <span className="relative flex items-center justify-center w-6 h-6 mx-[1px] group-hover:scale-110 transition-transform duration-300">
+                     <span className="absolute inset-0 border-[2px] border-teal-500 rounded-full opacity-90"></span>
+                     <GraduationCap 
+                        size={14} 
+                        className="text-teal-600 dark:text-teal-400 relative z-10 -mt-0.5 -ml-[0.5px] group-hover:-rotate-12 transition-transform duration-300" 
+                        strokeWidth={2.5} 
+                        fill="currentColor"
+                        fillOpacity={0.2} 
+                     />
+                  </span>
+                  rk
+                </span>
             </Link>
+
             <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
               We help you find jobs hidden in the noise. Connect with top companies and startups instantly.
             </p>
             
-            {/* Social Icons (GitHub Removed) */}
+            {/* Social Icons (Twitter Removed -> X Added) */}
             <div className="flex items-center gap-4 pt-2">
               <SocialLink href="https://linkedin.com/company/findmework" icon={<Linkedin size={18} />} label="LinkedIn" />
-              <SocialLink href="https://twitter.com/findmework" icon={<Twitter size={18} />} label="Twitter" />
+              
+              {/* 🔥 X LOGO ADDED HERE */}
+              <a 
+                href="https://x.com/findmework" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                aria-label="X (Twitter)"
+                className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 flex items-center justify-center hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all shadow-sm"
+              >
+                <XLogo className="w-4 h-4" />
+              </a>
+
               <SocialLink href="mailto:support@findmework.com" icon={<Mail size={18} />} label="Email" />
             </div>
           </div>
@@ -48,8 +82,8 @@ export default function Footer() {
           <div>
             <h3 className="text-slate-900 dark:text-white font-bold mb-4">Jobs</h3>
             <ul className="space-y-3 text-sm text-slate-500 dark:text-slate-400">
-              <li><FooterLink href="/linkedin-jobs">LinkedIn Feeds</FooterLink></li>
-              <li><FooterLink href="/twitter-jobs">Twitter Feeds</FooterLink></li>
+              <li><FooterLink href="/x-jobs">Verified Feeds</FooterLink></li>
+              <li><FooterLink href="/dashboard">Dashboard</FooterLink></li>
             </ul>
           </div>
 
@@ -73,7 +107,6 @@ export default function Footer() {
           <div className="flex items-center gap-2">
             <span>Made with</span>
             <Heart size={14} className="text-red-500 fill-red-500 animate-pulse" />
-            {/* India Removed as requested */}
             <span>for job seekers</span>
           </div>
         </div>
@@ -94,7 +127,7 @@ function FooterLink({ href, children }: { href: string, children: React.ReactNod
   );
 }
 
-// ✨ Helper Component for Social Icons
+// ✨ Helper Component for Social Icons (Generic)
 function SocialLink({ href, icon, label }: { href: string, icon: React.ReactNode, label: string }) {
   return (
     <a 

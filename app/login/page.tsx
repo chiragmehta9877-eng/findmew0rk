@@ -3,7 +3,8 @@ import React from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Zap, ArrowLeft, Linkedin, Chrome } from 'lucide-react';
+// 🔥 'Linkedin' import hata diya
+import { Zap, ArrowLeft, Chrome } from 'lucide-react';
 
 export default function LoginPage() {
   
@@ -54,19 +55,11 @@ export default function LoginPage() {
               onClick={() => handleLogin('google')}
               className="w-full flex items-center justify-center gap-3 bg-white dark:bg-white text-slate-700 font-bold py-3.5 px-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all transform hover:scale-[1.02] shadow-sm group"
             >
-              {/* Colored Google Icon Simulation */}
               <Chrome size={20} className="text-red-500 group-hover:text-red-600" />
               <span>Continue with Google</span>
             </button>
 
-            {/* LinkedIn Button */}
-            <button 
-              onClick={() => handleLogin('linkedin')}
-              className="w-full flex items-center justify-center gap-3 bg-[#0077b5] text-white font-bold py-3.5 px-4 rounded-xl hover:bg-[#006396] transition-all transform hover:scale-[1.02] shadow-lg shadow-blue-500/20"
-            >
-              <Linkedin size={20} fill="currentColor" />
-              <span>Continue with LinkedIn</span>
-            </button>
+            {/* 🔥 LinkedIn Button Removed Here */}
 
           </div>
 

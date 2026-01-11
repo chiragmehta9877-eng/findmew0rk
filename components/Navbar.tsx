@@ -1,16 +1,22 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useSession, signIn, signOut } from "next-auth/react";
-// 👇 'Bell' import kiya
-import { Menu, X, Zap, Linkedin, Twitter, Sun, Moon, Info, LogOut, User, LayoutDashboard, Shield, MessageSquare, Bell } from 'lucide-react';
+// 🔥 'Coffee' icon add kiya
+import { Menu, Zap, Sun, Moon, Info, LogOut, User, LayoutDashboard, MessageSquare, GraduationCap, Coffee, X as CloseIcon } from 'lucide-react';
+
+const XLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
 
 export default function Navbar() {
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [completion, setCompletion] = useState(20); // Default base score
 
-  // 1. THEME LOGIC
   useEffect(() => {
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       setIsDark(true);
@@ -21,9 +27,10 @@ export default function Navbar() {
     }
   }, []);
 
-  // 2. DATABASE SYNC LOGIC
-  useEffect(() => {
+  // 🔥 CORE FUNCTION: Fetch & Calculate Score
+  const fetchAndCalculateProfile = useCallback(() => {
     if (status === 'authenticated' && session?.user) {
+      
       fetch('/api/auth/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -34,10 +41,41 @@ export default function Navbar() {
         })
       })
       .then(res => res.json())
-      .then(data => console.log("✅ User Synced:", data))
+      .then(data => {
+          if(data.success && data.user) {
+             const user = data.user;
+             
+             // 🔥 MATCHING DASHBOARD LOGIC EXACTLY
+             let score = 20; // Base score
+             if(user.headline) score += 15;
+             if(user.location || user.detectedLocation) score += 10;
+             if(user.lookingFor) score += 15;
+             if(user.linkedin) score += 15;
+             if(user.x_handle) score += 15;
+             if(user.instagram) score += 10;
+             
+             setCompletion(Math.min(score, 100));
+          }
+      })
       .catch(err => console.error("❌ Sync Failed:", err));
     }
   }, [session, status]);
+
+  // 1. Initial Load
+  useEffect(() => {
+    fetchAndCalculateProfile();
+  }, [fetchAndCalculateProfile]);
+
+  // 2. 🔥 REAL-TIME LISTENER
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+        console.log("🔄 Navbar detected profile update, refreshing...");
+        fetchAndCalculateProfile();
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
+  }, [fetchAndCalculateProfile]);
 
   const toggleTheme = () => {
     if (isDark) {
@@ -56,13 +94,25 @@ export default function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* LOGO */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center text-white shadow-lg shadow-teal-500/30 group-hover:scale-105 transition-transform">
+          {/* 🔥 LOGO */}
+          <Link href="/" className="flex items-center gap-2.5 group select-none">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-teal-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-teal-500/30 group-hover:rotate-12 transition-transform duration-300">
               <Zap size={18} fill="currentColor" />
             </div>
-            <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-              FindMeWork
+            
+            <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center">
+              FindMeW
+              <span className="relative flex items-center justify-center w-6 h-6 mx-[1px] group-hover:scale-110 transition-transform duration-300">
+                 <span className="absolute inset-0 border-[2.5px] border-teal-500 rounded-full opacity-90"></span>
+                 <GraduationCap 
+                    size={14} 
+                    className="text-teal-600 dark:text-teal-400 relative z-10 -mt-0.5 -ml-[0.5px] group-hover:-rotate-12 transition-transform duration-300" 
+                    strokeWidth={2.5} 
+                    fill="currentColor"
+                    fillOpacity={0.2} 
+                 />
+              </span>
+              rk
             </span>
           </Link>
 
@@ -70,27 +120,27 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-6 lg:gap-8">
             <Link href="/" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Home</Link>
             
-            {/* 🔥 UPDATES BUTTON ADDED HERE */}
-            <Link href="/notice" className="relative text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors flex items-center gap-1.5">
-                <Bell size={16} /> Updates
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+            <Link href="/x-jobs" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1.5">
+                <XLogo className="w-4 h-4" /> Feeds
             </Link>
-
-            <Link href="/linkedin-jobs" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-[#0a66c2] transition-colors flex items-center gap-1.5"><Linkedin size={16} /> LinkedIn Feeds</Link>
-            <Link href="/twitter-jobs" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1.5"><Twitter size={16} /> Twitter Feeds</Link>
             
-            {/* Contact Us */}
             <Link href="/contact" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors flex items-center gap-1.5"><MessageSquare size={16} /> Contact Us</Link>
             
-            {/* Privacy Policy */}
-            <Link href="/privacy-policy" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors flex items-center gap-1.5"><Shield size={16} /> Privacy Policy</Link>
-            
-            {/* About Us */}
             <Link href="/about" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors flex items-center gap-1.5"><Info size={16} /> About Us</Link>
           </div>
 
           {/* RIGHT SIDE (Desktop) */}
           <div className="hidden md:flex items-center gap-4">
+            
+            {/* 🔥 BUY ME A COFFEE BUTTON (Desktop) */}
+            <Link 
+              href="/support" 
+              className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 transition-colors border border-yellow-200 dark:border-yellow-700/30"
+              title="Buy me a coffee"
+            >
+              <Coffee size={20} />
+            </Link>
+
             <button onClick={toggleTheme} className="p-2 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-yellow-400 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors">
               {isDark ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -98,23 +148,44 @@ export default function Navbar() {
             {status === "authenticated" ? (
               <div className="flex items-center gap-3">
                   
-                  {/* Dashboard Link */}
                   <Link href="/dashboard" className="hidden lg:flex items-center gap-1 bg-purple-50 text-purple-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-purple-100 transition-colors">
                       <LayoutDashboard size={14}/> Dashboard
                   </Link>
 
+                  {/* Profile Info Text */}
                   <div className="text-right hidden lg:block">
                       <p className="text-xs text-slate-500 dark:text-gray-400">Welcome,</p>
                       <p className="text-sm font-bold text-slate-900 dark:text-white max-w-[100px] truncate">{session.user?.name}</p>
                   </div>
                   
-                  {session.user?.image ? (
-                    <img src={session.user.image} alt="User" className="w-9 h-9 rounded-full border border-gray-200 dark:border-white/10" />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white"><User size={18}/></div>
-                  )}
+                  {/* PROFILE PICTURE WITH COMPLETION BORDER */}
+                  <div className="relative group cursor-pointer">
+                    
+                    {/* The Dynamic Border Ring */}
+                    <div 
+                        className="absolute -inset-[3px] rounded-full z-0 transition-all duration-500"
+                        style={{
+                            background: `conic-gradient(from 0deg, #14b8a6 ${completion}%, ${isDark ? '#334155' : '#e2e8f0'} 0deg)`
+                        }}
+                    ></div>
+
+                    {/* The Image Itself */}
+                    <div className="relative z-10 bg-white dark:bg-[#0A192F] p-[2px] rounded-full">
+                        {session.user?.image ? (
+                            <img src={session.user.image} alt="User" className="w-9 h-9 rounded-full object-cover" />
+                        ) : (
+                            <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white"><User size={18}/></div>
+                        )}
+                    </div>
+
+                    {/* The Percentage Badge */}
+                    <div className="absolute -bottom-2 -right-2 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white dark:border-slate-800 shadow-sm z-20">
+                        {completion}%
+                    </div>
+
+                  </div>
                   
-                  <button onClick={() => signOut()} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Logout">
+                  <button onClick={() => signOut()} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors ml-1" title="Logout">
                     <LogOut size={20} />
                   </button>
               </div>
@@ -127,11 +198,18 @@ export default function Navbar() {
 
           {/* MOBILE MENU TOGGLE */}
           <div className="md:hidden flex items-center gap-4">
+              <Link 
+                href="/support" 
+                className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-700/30"
+              >
+                <Coffee size={20} />
+              </Link>
+
               <button onClick={toggleTheme} className="p-2 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-yellow-400">
                 {isDark ? <Sun size={20} /> : <Moon size={20} />}
               </button>
               <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors">
-                {isOpen ? <X size={24} /> : <Menu size={24} />}
+                {isOpen ? <CloseIcon size={24} /> : <Menu size={24} />}
               </button>
           </div>
         </div>
@@ -143,30 +221,40 @@ export default function Navbar() {
           <div className="px-4 pt-2 pb-6 space-y-2">
             <Link href="/" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-teal-600">Home</Link>
             
-            {/* 🔥 Added Updates in Mobile Menu */}
-            <Link href="/notice" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"><Bell size={18} /> Updates</Link>
-
-            <Link href="/linkedin-jobs" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"><Linkedin size={18} /> LinkedIn Feeds</Link>
-            <Link href="/twitter-jobs" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"><Twitter size={18} /> Twitter Feeds</Link>
+            <Link href="/x-jobs" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"><XLogo className="w-5 h-5" /> Feeds</Link>
             
             <Link href="/contact" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"><MessageSquare size={18} /> Contact Us</Link>
             
-            <Link href="/privacy-policy" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"><Shield size={18} /> Privacy Policy</Link>
             <Link href="/about" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"><Info size={18} /> About Us</Link>
+            
+            {/* 🔥 Mobile Menu Coffee Link */}
+            <Link href="/support" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/10 hover:bg-yellow-100"><Coffee size={18} /> Buy me a Coffee</Link>
 
             <div className="pt-4 mt-2 border-t border-gray-100 dark:border-white/5">
                {status === "authenticated" ? (
                  <>
-                   {/* MOBILE PROFILE SECTION */}
                    <div className="flex items-center gap-3 px-2 mb-4">
-                      {session.user?.image ? (
-                        <img src={session.user.image} alt="User" className="w-10 h-10 rounded-full border border-gray-200 dark:border-white/10" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white"><User size={20}/></div>
-                      )}
+                      {/* Mobile Profile Pic */}
+                      <div className="relative">
+                          <div 
+                             className="absolute -inset-[2px] rounded-full z-0"
+                             style={{ background: `conic-gradient(from 0deg, #14b8a6 ${completion}%, ${isDark ? '#334155' : '#e2e8f0'} 0deg)` }}
+                          ></div>
+                          <div className="relative z-10 bg-white dark:bg-[#0A192F] p-[2px] rounded-full">
+                              {session.user?.image ? (
+                                <img src={session.user.image} alt="User" className="w-10 h-10 rounded-full object-cover" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white"><User size={20}/></div>
+                              )}
+                          </div>
+                      </div>
+
                       <div>
                         <p className="text-xs text-slate-500 dark:text-gray-400 font-medium">Signed in as</p>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{session.user?.name}</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            {session.user?.name} 
+                            <span className="text-[10px] bg-teal-100 text-teal-700 px-1.5 rounded-md">{completion}% complete</span>
+                        </p>
                       </div>
                    </div>
                    
@@ -174,7 +262,7 @@ export default function Navbar() {
                       <LayoutDashboard size={18} /> Go to Dashboard
                    </Link>
 
-                   <button onClick={() => signOut()} className="w-full bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                   <button onClick={() => signOut()} className="w-full bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-50 hover:text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
                      <LogOut size={18} /> Sign Out
                    </button>
                  </>

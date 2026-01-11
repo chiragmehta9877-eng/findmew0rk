@@ -5,23 +5,26 @@ import AuthProvider from "@/components/SessionProvider";
 import { connectToDB } from "@/lib/mongodb";
 import Setting from "@/models/Setting";
 import FeedbackPopup from "@/components/FeedbackPopup";
-// 👇 Import The Listener
 import MaintenanceListener from "@/components/MaintenanceListener";
-// 👇 Import Cookie Consent
 import CookieConsent from "@/components/CookieConsent";
-// 👇 Import Footer
 import Footer from "@/components/Footer";
+import UserTracker from "@/components/UserTracker";
+import BlockedPopup from "@/components/BlockedPopup";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// 🔥🔥 FIX FOR NETLIFY: Ye lines caching disable karengi
-// Taki DB update hote hi site turant down ho jaye
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "FindMeWork",
   description: "Find jobs hidden in the noise.",
+  // 🔥 MANUAL LINKING (Sabse Pakka Tarika)
+  icons: {
+    icon: "/logo.png",      
+    shortcut: "/logo.png", 
+    apple: "/logo.png",    
+  },
 };
 
 export default async function RootLayout({
@@ -45,9 +48,7 @@ export default async function RootLayout({
     return (
       <html lang="en">
         <body className={inter.className}>
-          {/* 👇 Yahan Listener lagao aur batao ki abhi Maintenance ON hai */}
           <MaintenanceListener currentStatus={true} />
-          
           <div className="flex flex-col items-center justify-center h-screen bg-[#0A192F] text-white text-center p-6">
             <div className="text-7xl mb-6 animate-bounce">🚧</div>
             <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-yellow-400 tracking-tight">
@@ -67,24 +68,18 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {/* 👇 Yahan Listener lagao aur batao ki abhi Maintenance OFF hai */}
         <MaintenanceListener currentStatus={false} />
-
         <AuthProvider>
-          {/* 👇 Footer Setup: Flex container to push footer to bottom */}
+          <UserTracker />
+          <BlockedPopup />
           <div className="flex flex-col min-h-screen">
-             {/* Main Content Area (Grows to fill space) */}
              <div className="flex-grow">
                 {children}
              </div>
-
-             {/* 👇 Footer Hamesha Neeche Rahega */}
              <Footer />
           </div>
         </AuthProvider>
         <FeedbackPopup />
-
-        {/* 👇 Cookie Consent Banner Added Here */}
         <CookieConsent />
       </body>
     </html>

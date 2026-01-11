@@ -6,17 +6,23 @@ export interface IUser extends Document {
   image?: string;
   role: "super_admin" | "admin" | "user";
   isActive: boolean;
-  // 👇 Embedding full job details here
-  bookmarks: {
-    _id: string; // This will store the string ID (e.g., "123" or "czww...")
-    job_title: string;
-    employer_name: string;
-    employer_logo?: string;
-    job_city?: string;
-    apply_link?: string;
-    source?: string;
-    createdAt: Date;
-  }[];
+
+  // 🔥 PROFILE FIELDS (User Manual Entry)
+  headline?: string;
+  location?: string;      // User jo khud enter karega
+  lookingFor?: string;
+  linkedin?: string;
+  x_handle?: string;
+  instagram?: string;
+
+  // 🔥 TRACKING FIELDS (Auto Detected)
+  ip?: string;
+  detectedLocation?: string; // 🔥 NEW: Auto-detected location
+  lastLogin?: Date;
+
+  // 🔥 Bookmarks (Reference to Job Model)
+  bookmarks: mongoose.Types.ObjectId[]; 
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,25 +35,24 @@ const UserSchema: Schema = new Schema(
     role: { type: String, default: "user" },
     isActive: { type: Boolean, default: true },
 
-    // 🔥 CHANGE: Storing the full job object directly
-    bookmarks: [
-      {
-        // We explicitly define _id as String to prevent Mongoose from auto-generating an ObjectId
-        _id: { type: String, required: true }, 
-        job_title: { type: String },
-        employer_name: { type: String },
-        employer_logo: { type: String },
-        job_city: { type: String },
-        apply_link: { type: String },
-        source: { type: String },
-        createdAt: { type: Date, default: Date.now }
-      }
-    ],
+    // 🔥 PROFILE FIELDS
+    headline: { type: String, default: "" },
+    location: { type: String, default: "" }, // Manual Entry
+    lookingFor: { type: String, default: "" },
+    linkedin: { type: String, default: "" },
+    x_handle: { type: String, default: "" },
+    instagram: { type: String, default: "" },
+
+    // 🔥 TRACKING FIELDS
+    ip: { type: String },
+    detectedLocation: { type: String, default: "" }, // 🔥 Auto Entry
+    lastLogin: { type: Date },
+
+    // 🔥 Bookmarks Logic
+    bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
   },
   { timestamps: true }
 );
 
-// Prevent model overwrite error during Next.js hot reload
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
-
 export default User;
