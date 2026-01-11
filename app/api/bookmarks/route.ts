@@ -12,7 +12,9 @@ export async function GET() {
     }
 
     await connectToDB();
-    const user = await User.findOne({ email: session.user.email });
+    
+    // Type casting 'any' here avoids TS conflict with old ObjectId definition
+    const user: any = await User.findOne({ email: session.user.email });
 
     // Debug Log
     console.log(`GET Bookmarks for ${session.user.email}:`, user?.bookmarks?.length || 0);
@@ -27,7 +29,7 @@ export async function GET() {
 
 // 🔥 DEBUG POST HANDLER
 export async function POST(req: Request) {
-  console.log("🔥 POST Request Received"); // Check 1
+  console.log("🔥 POST Request Received");
 
   try {
     const session = await getServerSession(authOptions);
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
     }
 
     const { jobId, jobData } = await req.json();
-    console.log("📦 Payload:", { jobId, hasJobData: !!jobData }); // Check 2
+    console.log("📦 Payload:", { jobId, hasJobData: !!jobData });
 
     if (!jobId) {
         console.log("❌ Job ID Missing");
@@ -47,14 +49,15 @@ export async function POST(req: Request) {
     await connectToDB();
     console.log("✅ DB Connected");
 
-    const user = await User.findOne({ email: session.user.email });
+    // 🔥 Fix Type Error: Cast user to 'any' to allow pushing Objects instead of ObjectIds
+    const user: any = await User.findOne({ email: session.user.email });
+    
     if (!user) {
         console.log("❌ User Not Found in DB");
         return NextResponse.json({ success: false }, { status: 404 });
     }
 
     console.log("👤 User Found:", user.email);
-    console.log("📂 Current Bookmarks Type:", typeof user.bookmarks);
 
     // Initialize if missing
     if (!Array.isArray(user.bookmarks)) {
@@ -62,9 +65,10 @@ export async function POST(req: Request) {
         user.bookmarks = [];
     }
 
-    // Logic to Add/Remove
+    // 🔥 LOGIC UPDATE: Use 'job_id' to match instead of '_id'
     const existingIndex = user.bookmarks.findIndex((b: any) => {
-        const savedId = b._id ? b._id.toString() : String(b);
+        // Support both old structure (string ID) and new structure (object with job_id)
+        const savedId = b.job_id || b.toString(); 
         return savedId === jobId.toString();
     });
 
@@ -77,8 +81,9 @@ export async function POST(req: Request) {
     } else {
       console.log("➕ Adding Job:", jobId);
       
+      // 🔥 NEW STRUCTURE: Matches your updated User Model
       const newBookmark = {
-        _id: jobId.toString(), // Force String
+        job_id: jobId.toString(), // Store External ID here
         job_title: jobData?.job_title || "Unknown Title",
         employer_name: jobData?.employer_name || "Unknown Company",
         employer_logo: jobData?.employer_logo || "",
