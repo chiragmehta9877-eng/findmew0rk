@@ -2,12 +2,12 @@ import { schedule } from '@netlify/functions';
 import mongoose from 'mongoose';
 import axios from 'axios';
 
-// ⚠️ Relative Imports (Apne Project structure ke hisab se adjust karein)
-// Next.js App Router me aksar ye paths hote hain:
+// ⚠️ Ensure these paths are correct based on your folder structure
+// Since this file is in 'netlify/functions/', we go up two levels to reach 'lib' and 'models'
 import { connectToDB } from '../../lib/mongodb'; 
 import Job from '../../models/Job';
 
-// 🔑 KEYS (Netlify Env Variables se lega, ya yahan Hardcode kar sakte ho testing ke liye)
+// 🔑 KEYS
 const RAPID_API_KEY = process.env.RAPID_API_KEY || '15ecf5c2e1msha76c0e9843b9e44p10032bjsn8fc2c9cbe2d8';
 const TWITTER_HOST = 'twitter-api45.p.rapidapi.com';
 
@@ -16,10 +16,10 @@ const CATEGORIES = [
   "Data Science & AI",
   "Internships",
   "Freelance",
-  "All Jobs" // "job"
+  "All Jobs"
 ];
 
-// Helpers (Same logic as your API)
+// --- HELPERS ---
 const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 
 function getQuery(category: string) {
@@ -42,8 +42,8 @@ function inferLocation(text: string) {
     return 'Global';
 }
 
-// 🔥 MAIN CRON HANDLER
-const handler = async (event: any) => {
+// --- MAIN LOGIC ---
+const cronHandler = async (event: any) => {
     console.log("⏰ [Cloud Cron] Started Hourly Job Fetch...");
     
     // 1. Connect DB
@@ -60,7 +60,7 @@ const handler = async (event: any) => {
         try {
             const query = getQuery(category);
             
-            // Call Twitter API (Sirf 1 call per category = 10-15 results)
+            // Call Twitter API
             const response = await axios.get(`https://${TWITTER_HOST}/search.php`, {
                 params: { query: query, search_type: 'Latest' },
                 headers: {
@@ -79,8 +79,7 @@ const handler = async (event: any) => {
                 const emailMatch = text.match(emailRegex);
                 
                 if (emailMatch) {
-                    // Composite ID Logic (Same as your API)
-                    const safeCategory = category === "All Jobs" ? "job" : category; // Map 'All Jobs' to 'job'
+                    const safeCategory = category === "All Jobs" ? "job" : category;
                     const safeCatId = safeCategory.replace(/\s+/g, '_').toLowerCase();
                     const uniqueJobId = `${item.tweet_id}__${safeCatId}`;
 
@@ -96,7 +95,7 @@ const handler = async (event: any) => {
                                 link: item.url,
                                 text: text,
                                 source: "twitter",
-                                category: safeCategory, // Store as clean category
+                                category: safeCategory,
                                 job_city: inferLocation(text),
                                 email: emailMatch[0],
                                 posted_at: new Date()
@@ -123,9 +122,6 @@ const handler = async (event: any) => {
     };
 };
 
-// ⏳ SCHEDULE: Run every hour automatically
-export const config = {
-    schedule: "@hourly"
-};
-
-export { handler };
+// 🔥🔥 FIX: Wrap the handler with 'schedule' before exporting
+// "@hourly" means it runs once every hour.
+export const handler = schedule("@hourly", cronHandler);
