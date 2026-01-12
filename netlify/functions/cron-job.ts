@@ -1,9 +1,8 @@
-import { schedule } from '@netlify/functions';
+// import { schedule } from '@netlify/functions'; // 🛑 PAUSED (Uncomment to enable)
 import mongoose from 'mongoose';
 import axios from 'axios';
 
 // ⚠️ Ensure these paths are correct based on your folder structure
-// Since this file is in 'netlify/functions/', we go up two levels to reach 'lib' and 'models'
 import { connectToDB } from '../../lib/mongodb'; 
 import Job from '../../models/Job';
 
@@ -42,7 +41,7 @@ function inferLocation(text: string) {
     return 'Global';
 }
 
-// --- MAIN LOGIC ---
+// --- MAIN LOGIC (Preserved but Inactive) ---
 const cronHandler = async (event: any) => {
     console.log("⏰ [Cloud Cron] Started Hourly Job Fetch...");
     
@@ -122,6 +121,15 @@ const cronHandler = async (event: any) => {
     };
 };
 
-// 🔥🔥 FIX: Wrap the handler with 'schedule' before exporting
-// "@hourly" means it runs once every hour.
-export const handler = schedule("@hourly", cronHandler);
+// 🔥🔥 PAUSED STATE
+// Original Code (Commented Out):
+// export const handler = schedule("@hourly", cronHandler);
+
+// ✅ Active Dummy Handler (Does Nothing)
+export const handler = async (event: any) => {
+    console.log("⏸️ Cron Job is currently PAUSED via Code.");
+    return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "Cron is PAUSED." }),
+    };
+};
