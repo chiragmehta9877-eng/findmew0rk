@@ -29,8 +29,6 @@ export default function Navbar() {
   // 🔥 CORE FUNCTION: Strict Sync with Dashboard
   const fetchAndCalculateProfile = useCallback(() => {
     if (status === 'authenticated' && session?.user?.email) {
-      
-      // Cache Busting (?t=...) added
       fetch(`/api/auth/sync?t=${Date.now()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -40,24 +38,14 @@ export default function Navbar() {
       .then(data => {
           if(data.success && data.user) {
              const user = data.user;
-             
-             // 🔥 Helper: Check for empty spaces
              const isFilled = (val: string | undefined | null) => val && val.trim().length > 0;
-
-             let score = 20; // Base score
-
-             // 🔥 STRICT MATCH LOGIC (Removed 'detectedLocation')
+             let score = 20; 
              if(isFilled(user.headline)) score += 15;
-             
-             // ❌ REMOVED: isFilled(user.detectedLocation)
-             // ✅ KEPT: Only Manual Location (Taki Dashboard se match kare)
              if(isFilled(user.location)) score += 10;
-             
              if(isFilled(user.lookingFor)) score += 15;
              if(isFilled(user.linkedin)) score += 15;
              if(isFilled(user.x_handle)) score += 15;
              if(isFilled(user.instagram)) score += 10;
-             
              setCompletion(Math.min(score, 100));
           }
       })
@@ -65,7 +53,6 @@ export default function Navbar() {
     }
   }, [session, status]);
 
-  // Initial Load & Focus
   useEffect(() => {
     fetchAndCalculateProfile();
     const onFocus = () => fetchAndCalculateProfile();
@@ -73,7 +60,6 @@ export default function Navbar() {
     return () => window.removeEventListener("focus", onFocus);
   }, [fetchAndCalculateProfile]);
 
-  // Event Listener for Profile Updates
   useEffect(() => {
     const handleProfileUpdate = () => {
         console.log("🔄 Navbar updating...");
@@ -156,15 +142,15 @@ export default function Navbar() {
                       <p className="text-sm font-bold text-slate-900 dark:text-white max-w-[100px] truncate">{session.user?.name}</p>
                   </div>
                   
-                  {/* PROFILE PICTURE */}
-                  <div className="relative group cursor-pointer">
+                  {/* 🔥 PROFILE PICTURE NOW LINKS TO DASHBOARD */}
+                  <Link href="/dashboard" className="relative group cursor-pointer block">
                     <div 
                         className="absolute -inset-[3px] rounded-full z-0 transition-all duration-500"
                         style={{
                             background: `conic-gradient(from 0deg, #14b8a6 ${completion}%, ${isDark ? '#334155' : '#e2e8f0'} 0deg)`
                         }}
                     ></div>
-                    <div className="relative z-10 bg-white dark:bg-[#0A192F] p-[2px] rounded-full">
+                    <div className="relative z-10 bg-white dark:bg-[#0A192F] p-[2px] rounded-full hover:scale-105 transition-transform">
                         {session.user?.image ? (
                             <img src={session.user.image} alt="User" className="w-9 h-9 rounded-full object-cover" />
                         ) : (
@@ -174,7 +160,7 @@ export default function Navbar() {
                     <div className="absolute -bottom-2 -right-2 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white dark:border-slate-800 shadow-sm z-20">
                         {completion}%
                     </div>
-                  </div>
+                  </Link>
                   
                   <button onClick={() => signOut()} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors ml-1" title="Logout">
                     <LogOut size={20} />
@@ -213,10 +199,11 @@ export default function Navbar() {
             <div className="pt-4 mt-2 border-t border-gray-100 dark:border-white/5">
                {status === "authenticated" ? (
                  <>
-                   <div className="flex items-center gap-3 px-2 mb-4">
+                   {/* 🔥 MOBILE PROFILE ALSO LINKS TO DASHBOARD */}
+                   <Link href="/dashboard" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-2 mb-4 group cursor-pointer">
                      <div className="relative">
                          <div className="absolute -inset-[2px] rounded-full z-0" style={{ background: `conic-gradient(from 0deg, #14b8a6 ${completion}%, ${isDark ? '#334155' : '#e2e8f0'} 0deg)` }}></div>
-                         <div className="relative z-10 bg-white dark:bg-[#0A192F] p-[2px] rounded-full">
+                         <div className="relative z-10 bg-white dark:bg-[#0A192F] p-[2px] rounded-full group-hover:scale-105 transition-transform">
                              {session.user?.image ? (
                                <img src={session.user.image} alt="User" className="w-10 h-10 rounded-full object-cover" />
                              ) : (
@@ -231,7 +218,8 @@ export default function Navbar() {
                            <span className="text-[10px] bg-teal-100 text-teal-700 px-1.5 rounded-md">{completion}% complete</span>
                        </p>
                      </div>
-                   </div>
+                   </Link>
+                   
                    <Link href="/dashboard" onClick={() => setIsOpen(false)} className="flex items-center justify-center gap-2 w-full bg-purple-50 text-purple-700 py-3 rounded-xl font-bold mb-3 hover:bg-purple-100 transition-colors">
                       <LayoutDashboard size={18} /> Go to Dashboard
                    </Link>

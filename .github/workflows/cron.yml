@@ -1,0 +1,20 @@
+name: Trigger Email Cron
+
+on:
+  schedule:
+    # ┌───────────── minute (0 - 59)
+    # │ ┌───────────── hour (0 - 23)
+    # │ │ ┌───────────── day of the month (1 - 31)
+    # │ │ │ ┌───────────── month (1 - 12)
+    # │ │ │ │ ┌───────────── day of the week (0 - 6)
+    # │ │ │ │ │
+    # * * * * *
+    - cron: '0 10 */3 * *'  # Har 3 din me subah 10 baje (UTC)
+  workflow_dispatch:      # Manual run button bhi dega
+
+jobs:
+  ping-url:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Netlify API Route
+        run: curl -X GET https://findmew0rk.com/api/cron

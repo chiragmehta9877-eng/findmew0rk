@@ -5,11 +5,13 @@ import AuthProvider from "@/components/SessionProvider";
 import { connectToDB } from "@/lib/mongodb";
 import Setting from "@/models/Setting";
 import FeedbackPopup from "@/components/FeedbackPopup";
+import SupportPopup from "@/components/SupportPopup"; // ✅ Imported
 import MaintenanceListener from "@/components/MaintenanceListener";
 import CookieConsent from "@/components/CookieConsent";
 import Footer from "@/components/Footer";
 import UserTracker from "@/components/UserTracker";
 import BlockedPopup from "@/components/BlockedPopup";
+import Chatbot from "@/components/Chatbot";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -78,9 +80,14 @@ export default async function RootLayout({
              </div>
              <Footer />
           </div>
+          <Chatbot />
         </AuthProvider>
+        
+        {/* 🔥 Global Popups */}
         <FeedbackPopup />
+        <SupportPopup /> {/* ✅ Added Here */}
         <CookieConsent />
+        
       </body>
     </html>
   );

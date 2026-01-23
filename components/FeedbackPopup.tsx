@@ -11,13 +11,17 @@ export default function FeedbackPopup() {
 
   useEffect(() => {
     setIsMounted(true);
-    // 🔥 2 Second delay
+    
+    // 🔥 Updated: 1 Minute delay (60000 milliseconds)
     const timer = setTimeout(() => {
+        // Agar aap chahte hain ki user ko sirf ek baar dikhe session me, 
+        // toh neeche wali lines uncomment kar dena:
+        
         // const hasSeen = sessionStorage.getItem('feedbackSeen');
         // if (!hasSeen) {
             setIsVisible(true);
         // }
-    }, 2000);
+    }, 60000); // <--- Yahan 60000 kar diya hai (1 Minute)
 
     return () => clearTimeout(timer);
   }, []);
@@ -44,18 +48,16 @@ export default function FeedbackPopup() {
           
           {/* POSTER CARD CONTAINER */}
           <motion.div 
-            // 🔥 OPTIMIZED FOR MOBILE: 
-            // Scale 0.5 se 0.95 kar diya taaki rendering smooth ho.
+            // 🔥 OPTIMIZED FOR MOBILE
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ 
                 type: "spring", 
-                stiffness: 300, // Thoda soft kar diya
-                damping: 30,    // Jhatka kam lagega
-                mass: 1         // Solid feel aayega
+                stiffness: 300, 
+                damping: 30,    
+                mass: 1         
             }}
-            // 🔥 GPU Optimization
             style={{ willChange: "transform, opacity" }} 
             className="relative group w-full max-w-3xl"
           >

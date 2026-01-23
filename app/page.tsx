@@ -1,13 +1,14 @@
 'use client';
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // 🔥 Import useRouter
+import { useRouter } from 'next/navigation'; 
 import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import { Briefcase, Bell, Globe, Cpu, Target, Shield, Layers, ArrowRight, CheckCircle, Zap } from 'lucide-react';
 import Navbar from '@/components/Navbar'; 
 import JobHologram from '@/components/home/JobHologram';
 import HeroSearch from '@/components/home/HeroSearch'; 
 import { useSession } from 'next-auth/react'; 
+import AlertModal from '@/components/AlertModal';
 
 // --- Animation Variants ---
 const fadeInUp: Variants = {
@@ -29,7 +30,11 @@ export default function HomePage() {
   
   // 🔥 Auth Check & Router
   const { status } = useSession();
-  const router = useRouter(); // 🔥 Router Hook
+  const router = useRouter(); 
+
+  // 🔥 ADDED STATE HERE
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false); // ✅ New State for UI Change
 
   // --- Parallax Setup ---
   const ref = useRef(null);
@@ -48,10 +53,9 @@ export default function HomePage() {
   // Desktop only parallax
   const yBackground = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
 
-  // 🔥 NEW FUNCTION: Handle Search and Redirect
+  // 🔥 Handle Search and Redirect
   const handleHomeSearch = (query: string) => {
     if (query.trim()) {
-      // Redirect to x-jobs page with search query parameter
       router.push(`/x-jobs?search=${encodeURIComponent(query)}`);
     }
   };
@@ -107,7 +111,6 @@ export default function HomePage() {
               </motion.p>
 
               <motion.div variants={fadeInUp} className="w-full">
-                {/* 🔥 Pass the handler to HeroSearch */}
                 <HeroSearch onSearch={handleHomeSearch} />
               </motion.div>
 
@@ -116,9 +119,36 @@ export default function HomePage() {
                   <Briefcase size={20} /> Find Work Now
                 </Link>
                 
-                <button className="w-full sm:w-auto px-8 py-4 bg-white border border-gray-200 text-slate-700 hover:border-teal-500 hover:text-teal-600 dark:bg-[#112240] dark:border-white/10 dark:text-white dark:hover:border-teal-400/50 font-bold rounded-xl transition-all flex items-center justify-center gap-2 group shadow-sm dark:shadow-none">
-                  <Bell size={20} className="text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors" /> Get Daily Alerts
+                {/* 🔥 UPDATED BUTTON: Change Logic based on isSubscribed */}
+                <button 
+                  onClick={() => !isSubscribed && setIsAlertOpen(true)}
+                  disabled={isSubscribed} // Click disable kar diya agar subscribed hai
+                  className={`w-full sm:w-auto px-8 py-4 border font-bold rounded-xl transition-all flex items-center justify-center gap-2 group shadow-sm dark:shadow-none
+                    ${isSubscribed 
+                      ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400 cursor-default" 
+                      : "bg-white border-gray-200 text-slate-700 hover:border-teal-500 hover:text-teal-600 dark:bg-[#112240] dark:border-white/10 dark:text-white dark:hover:border-teal-400/50"
+                    }
+                  `}
+                >
+                  {isSubscribed ? (
+                    <>
+                      <CheckCircle size={20} className="text-green-600 dark:text-green-400" />
+                      Subscribed
+                    </>
+                  ) : (
+                    <>
+                      <Bell size={20} className="text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors" /> 
+                      Get Daily Alerts
+                    </>
+                  )}
                 </button>
+
+                {/* 🔥 UPDATED ALERT MODAL PROP */}
+                <AlertModal 
+                  isOpen={isAlertOpen} 
+                  onClose={() => setIsAlertOpen(false)} 
+                  onSuccess={() => setIsSubscribed(true)} // ✅ Ye alert modal ko batayega ki success ho gaya
+                />
               </motion.div>
 
               {/* Stats */}
@@ -217,7 +247,7 @@ export default function HomePage() {
       {/* =========================================
           🔥 SECTION: WHY US (Optimized Parallax)
       ========================================= */}
-     <section className="py-24 bg-slate-50 dark:bg-[#0A192F] relative overflow-hidden">
+      <section className="py-24 bg-slate-50 dark:bg-[#0A192F] relative overflow-hidden">
         {/* Parallax Background - ONLY DESKTOP */}
         <motion.div 
           style={{ y: isMobile ? 0 : yBackground }} 
@@ -264,9 +294,12 @@ export default function HomePage() {
                 ))}
               </ul>
 
-              <button className="mt-10 px-10 py-4 rounded-full border border-slate-300 dark:border-white/10 hover:border-teal-500 dark:hover:border-teal-400 text-slate-900 dark:text-white font-bold transition-colors flex items-center gap-3 group">
-                Explore Features <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </button>
+ <Link 
+  href="/x-jobs" 
+  className="mt-10 px-10 py-4 w-fit inline-flex items-center gap-3 rounded-full border border-slate-300 dark:border-white/10 hover:border-teal-500 dark:hover:border-teal-400 text-slate-900 dark:text-white font-bold transition-colors group"
+>
+  Explore Features <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+</Link>
             </motion.div>
 
             {/* Right Column: Cards */}
