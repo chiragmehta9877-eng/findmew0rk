@@ -66,7 +66,6 @@ export default function DashboardPage() {
             .then(res => res.json())
             .then(data => {
                 if (data.success && Array.isArray(data.data)) {
-                    // Filter out null/invalid entries
                     const validJobs = data.data.filter((j: any) => j && (j.job_id || j._id));
                     setSavedJobs(validJobs);
                 }
@@ -104,29 +103,29 @@ export default function DashboardPage() {
     if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
   }, [savedJobs.length, totalPages, currentPage]);
 
-  // 🔥 FIX: DELETE FUNCTION
+  // 🔥 DELETE FUNCTION
   const removeBookmark = async (e: React.MouseEvent, idToDelete: string) => {
     e.preventDefault(); 
-    e.stopPropagation(); 
+    e.stopPropagation(); // Parent click stop karega
     
     const previousJobs = [...savedJobs];
 
-    // Optimistic Update: UI se turant hatao
     setSavedJobs((prev) => prev.filter((job) => {
-        // Check BOTH job_id (Correct) and _id (Fallback)
         const currentId = job.job_id || job._id;
         return currentId.toString() !== idToDelete.toString();
     }));
 
     try {
         const res = await fetch('/api/bookmarks', {
-            method: 'POST',
+            method: 'POST', // Toggle logic
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ jobId: idToDelete })
         });
+
         if (!res.ok) throw new Error("Failed");
     } catch (err) {
-        setSavedJobs(previousJobs); // Error aane par wapas lagao
+        console.error("Delete failed:", err);
+        setSavedJobs(previousJobs);
         alert("Failed to delete. Please try again.");
     }
   };
@@ -144,7 +143,6 @@ export default function DashboardPage() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(profileData)
           });
-          
           if (res.ok) {
               window.dispatchEvent(new Event('profileUpdated'));
               setIsEditing(false);
@@ -235,10 +233,7 @@ export default function DashboardPage() {
                             {profileData.location ? profileData.location : (profileData.detectedLocation ? `${profileData.detectedLocation} (Auto)` : "Add Location")}
                         </p>
 
-                        <button 
-                            onClick={() => setIsEditing(true)}
-                            className="w-full mb-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg active:scale-95"
-                        >
+                        <button onClick={() => setIsEditing(true)} className="w-full mb-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg active:scale-95">
                             <Edit3 size={16} /> {completion === 100 ? "Edit Profile" : "Complete Profile"}
                         </button>
 
@@ -282,37 +277,41 @@ export default function DashboardPage() {
                     <div className="flex flex-col gap-4">
                         <AnimatePresence mode="popLayout">
                             {currentJobs.map((job, index) => {
-                                // 🔥 FIX: ID LOGIC
-                                // 1. React Key ke liye DB ID (_id) use karo (unique hoti hai)
-                                // 2. URL/Delete ke liye Job ID (job_id) use karo (API iski umeed karti hai)
-                                const dbId = job._id || index;
-                                const realJobId = job.job_id;
-                                
-                                // Agar job_id nahi hai (purana data/corruption), to fallback _id use karo
-                                const idForAction = realJobId || job._id; 
-
+                                // ID Logic
+                                const uniqueKey = job._id || job.job_id || index; 
+                                const idForAction = job.job_id || job._id; 
                                 const jobUrl = job.source === 'twitter' ? `/x-jobs/${idForAction}` : `/linkedin-jobs/${idForAction}`;
                                 
                                 return (
-                                <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} key={dbId} onClick={() => router.push(jobUrl)} className="group relative bg-white dark:bg-[#112240] p-5 rounded-2xl border border-gray-200 dark:border-white/5 hover:border-teal-500/50 dark:hover:border-teal-500/50 transition-all shadow-sm hover:shadow-lg cursor-pointer">
+                                <motion.div 
+                                    layout 
+                                    initial={{ opacity: 0, scale: 0.95 }} 
+                                    animate={{ opacity: 1, scale: 1 }} 
+                                    exit={{ opacity: 0, scale: 0.9 }} 
+                                    key={uniqueKey} 
+                                    onClick={() => router.push(jobUrl)} 
+                                    className="group relative bg-white dark:bg-[#112240] p-5 rounded-2xl border border-gray-200 dark:border-white/5 hover:border-teal-500/50 dark:hover:border-teal-500/50 transition-all shadow-sm hover:shadow-lg cursor-pointer"
+                                >
+                                    {/* 🔥 ABSOLUTE DELETE BUTTON (Won't be blocked by text) */}
+                                    <button 
+                                        onClick={(e) => removeBookmark(e, idForAction)} 
+                                        className="absolute top-4 right-4 z-50 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 bg-white/50 dark:bg-black/20 rounded-lg transition-all"
+                                        title="Remove"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+
                                     <div className="flex items-start gap-4 relative z-10">
-                                        
                                         <div className="w-16 h-16 rounded-xl bg-slate-50 dark:bg-white p-2 flex items-center justify-center border border-gray-100 dark:border-white/5 shrink-0">
                                             <img src={job.employer_logo || "/fallback-job.png"} className="w-full h-full object-contain" onError={(e) => (e.currentTarget.src = "/fallback-job.png")} />
                                         </div>
                                         
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <h4 className="font-bold text-lg text-slate-900 dark:text-white truncate pr-2">{job.job_title || "Unknown Title"}</h4>
-                                                
-                                                {/* DELETE BUTTON: Ab ye 'idForAction' bhejeaga jo ki sahi ID hai */}
-                                                <button 
-                                                    onClick={(e) => removeBookmark(e, idForAction)} 
-                                                    className="p-2 -mt-2 -mr-2 text-slate-400 dark:text-white hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors z-20 cursor-pointer"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
+                                            {/* Padding right added so text doesn't go under delete button */}
+                                            <div className="pr-12"> 
+                                                <h4 className="font-bold text-lg text-slate-900 dark:text-white truncate">{job.job_title || "Unknown Title"}</h4>
                                             </div>
+
                                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500 dark:text-slate-400 mt-1">
                                                 <span className="flex items-center gap-1 font-medium"><Building2 size={14}/> {job.employer_name}</span>
                                                 <span className="flex items-center gap-1"><MapPin size={14}/> {job.job_city || "Remote"}</span>
@@ -334,7 +333,6 @@ export default function DashboardPage() {
                             )})}
                         </AnimatePresence>
 
-                        {/* Pagination */}
                         {savedJobs.length > JOBS_PER_PAGE && (
                             <div className="flex justify-center items-center gap-4 mt-6 pt-6 border-t border-gray-100 dark:border-white/5">
                                 <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="p-2 rounded-lg bg-white dark:bg-[#112240] border border-gray-200 dark:border-white/10 text-slate-600 dark:text-slate-300 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-white/5"><ChevronLeft size={20} /></button>
@@ -368,7 +366,6 @@ export default function DashboardPage() {
         {isEditing && (
             <>
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsEditing(false)} className="fixed inset-0 bg-black/60 z-50 backdrop-blur-sm" />
-                
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95, y: 20 }} 
@@ -380,22 +377,18 @@ export default function DashboardPage() {
                             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Update Profile</h2>
                             <button onClick={() => setIsEditing(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10"><X size={20}/></button>
                         </div>
-
                         <div className="flex-1 overflow-y-auto p-6 space-y-5">
                             <div className="space-y-4">
                                 <InputField label="Headline" icon={<Briefcase size={18} />} name="headline" value={profileData.headline} onChange={handleInputChange} placeholder="e.g. Frontend Developer" />
                                 <InputField label="What are you looking for?" icon={<Target size={18} />} name="lookingFor" value={profileData.lookingFor} onChange={handleInputChange} placeholder="e.g. Full-time SDE, Internship" />
                                 <InputField label="Location" icon={<MapPin size={18} />} name="location" value={profileData.location} onChange={handleInputChange} placeholder="e.g. New Delhi" />
                             </div>
-                            
                             <div className="h-px bg-gray-100 dark:bg-white/10"></div>
                             <p className="text-xs font-bold text-slate-400 uppercase">Social Links</p>
-
                             <SocialInput icon={<Linkedin size={18} />} color="text-blue-600 bg-blue-100" name="linkedin" value={profileData.linkedin} onChange={handleInputChange} placeholder="LinkedIn URL" />
                             <SocialInput icon={<XLogo className="w-[18px] h-[18px]" />} color="text-black bg-gray-200" name="x_handle" value={profileData.x_handle} onChange={handleInputChange} placeholder="X Profile URL" />
                             <SocialInput icon={<Instagram size={18} />} color="text-pink-600 bg-pink-100" name="instagram" value={profileData.instagram} onChange={handleInputChange} placeholder="Instagram URL" />
                         </div>
-
                         <div className="p-6 border-t border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-black/20 rounded-b-3xl flex-shrink-0">
                             <button onClick={handleSaveProfile} disabled={isSaving} className="w-full bg-teal-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-teal-500/20 hover:bg-teal-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95">
                                 {isSaving ? <Loader2 className="animate-spin" size={20}/> : <Save size={20} />} {isSaving ? "Saving..." : "Save Changes"}
@@ -406,7 +399,6 @@ export default function DashboardPage() {
             </>
         )}
       </AnimatePresence>
-
     </div>
   );
 }

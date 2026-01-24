@@ -6,6 +6,8 @@ import nodemailer from "nodemailer";
 export async function POST(req: Request) {
   try {
     await connectToDB();
+    
+    // 🔥 NOTE: Frontend se ab { email, preference } hi aana chahiye
     const { email, preference } = await req.json();
 
     if (!email || !preference) {
@@ -21,14 +23,14 @@ export async function POST(req: Request) {
       await Subscriber.create({ email, preference });
     }
 
-    // 2. 🔥 BREVO SMTP CONFIGURATION (Gmail Hata Diya)
+    // 2. 🔥 BREVO SMTP CONFIGURATION
     const transporter = nodemailer.createTransport({
       host: process.env.BREVO_HOST, // smtp-relay.brevo.com
       port: Number(process.env.BREVO_PORT), // 587
       secure: false, // true for 465, false for other ports
       auth: {
         user: process.env.BREVO_USER, // Apka Brevo Login Email
-        pass: process.env.BREVO_PASS, // Apki SMTP Key
+        pass: process.env.BREVO_PASS, // Apki SMTP Key (Master Password)
       },
     });
 

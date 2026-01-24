@@ -1,168 +1,242 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { MessageSquare, X, Send, Sparkles, Zap, Bot } from 'lucide-react';
+
+import { useState, useEffect, useRef } from 'react';
+import { MessageCircle, X, Send, Bot, ArrowRight, Minus, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+
+// 🤖 CHATBOT LOGIC (Updated with more conversations)
+const getBotResponse = (input: string): { text: string; link?: string; linkText?: string } => {
+  const lowerInput = input.toLowerCase();
+
+  // 1. GREETINGS & CASUAL
+  if (lowerInput.match(/\b(hi|hello|hey|greetings|sup)\b/)) {
+    return { text: "Hello! 👋 I'm FindMeWork AI. Ready to hunt some jobs? 🚀" };
+  }
+  if (lowerInput.includes("how are you") || lowerInput.includes("how r u")) {
+    return { text: "I'm just code, but I'm feeling fantastic! ⚡ Thanks for asking. How can I help your career today?" };
+  }
+  if (lowerInput.match(/\b(lol|lmao|haha|rofl)\b/)) {
+    return { text: "Glad I could make you smile! 😄 Job hunting is serious, but we can still have fun." };
+  }
+  if (lowerInput.match(/\b(bye|goodbye|cya|night|gn)\b/)) {
+    return { text: "Goodbye! 👋 Good luck with the job hunt. I'll be here if you need me again!" };
+  }
+  if (lowerInput.match(/\b(thanks|thank you|thx)\b/)) {
+    return { text: "You're very welcome! 💚 Let's land that dream job." };
+  }
+
+  // 2. SITE NAVIGATION
+  if (lowerInput.includes("privacy") || lowerInput.includes("policy")) {
+    return { 
+      text: "Your data is safe with us. We don't sell your info.", 
+      link: "/privacy-policy",
+      linkText: "Read Privacy Policy 🔒"
+    };
+  }
+  if (lowerInput.includes("support") || lowerInput.includes("help") || lowerInput.includes("contact")) {
+    return { 
+      text: "Need a human? Our support team is ready to assist.", 
+      link: "/contact", 
+      linkText: "Contact Support 🎧"
+    };
+  }
+  if (lowerInput.includes("cost") || lowerInput.includes("free") || lowerInput.includes("pricing")) {
+    return { text: "FindMeWork is 100% Free for job seekers! 🎉 No hidden fees." };
+  }
+
+  // 3. JOB RELATED
+  if (lowerInput.includes("job") || lowerInput.includes("work") || lowerInput.includes("hiring")) {
+    return { text: "I can help! Use the search bar for specific roles like 'React' or 'Data'. Or browse the latest drops below." };
+  }
+
+  // 4. FALLBACK
+  return { text: "I'm still learning! 🧠 Try asking 'How are you?', 'Privacy Policy', or just say 'Hi'." };
+};
+
+// 💡 QUICK SUGGESTIONS
+const SUGGESTIONS = [
+  "Find me a job 🚀",
+  "How are you? 🤖",
+  "Is this free? 💸",
+  "Privacy Policy 🔒",
+  "Bye! 👋"
+];
+
+type Message = {
+  id: number;
+  text: string;
+  sender: 'user' | 'bot';
+  link?: string;
+  linkText?: string;
+};
 
 export default function Chatbot() {
-  const router = useRouter(); 
   const [isOpen, setIsOpen] = useState(false);
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState([
-    { role: 'bot', text: 'Hi! 👋 Need help finding a job?' }
+  const [isHovered, setIsHovered] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
+    { id: 1, text: "Hi! I'm your AI Recruiter. How can I help? 🤖", sender: 'bot' }
   ]);
+  const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if(isOpen) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping, isOpen]);
 
-  const handleSend = async (msg: string = input) => {
-    if (!msg.trim()) return;
+  const handleSendMessage = (text: string) => {
+    if (!text.trim()) return;
 
-    const userMsg = { role: 'user', text: msg };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput('');
+    const newUserMsg: Message = { id: Date.now(), text: text, sender: 'user' };
+    setMessages(prev => [...prev, newUserMsg]);
+    setInputText("");
     setIsTyping(true);
 
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg }),
-      });
-      const data = await res.json();
-      
-      setTimeout(() => {
-        setMessages((prev) => [...prev, { role: 'bot', text: data.reply }]);
-        setIsTyping(false);
-
-        if (data.action === 'search' && data.query) {
-            setTimeout(() => {
-                setIsOpen(false); 
-                router.push(`/x-jobs?search=${encodeURIComponent(data.query)}`); 
-            }, 1500);
-        }
-
-      }, 600);
-
-    } catch (error) {
-      setTimeout(() => {
-        setMessages((prev) => [...prev, { role: 'bot', text: "Connection error." }]);
-        setIsTyping(false);
-      }, 1000);
-    }
+    setTimeout(() => {
+      const response = getBotResponse(text);
+      const newBotMsg: Message = { 
+        id: Date.now() + 1, 
+        text: response.text, 
+        sender: 'bot',
+        link: response.link,
+        linkText: response.linkText
+      };
+      setMessages(prev => [...prev, newBotMsg]);
+      setIsTyping(false);
+    }, 1000); 
   };
 
-  const suggestions = ["Remote Jobs", "Internships", "Freelance"];
-
   return (
-    // 🔥 FIX: Dynamic Z-Index (Open hone par hi sabse upar ayega)
-    <div className={`fixed bottom-5 right-5 flex flex-col items-end font-sans transition-all ${isOpen ? 'z-[9999]' : 'z-30'}`}>
+    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-4 font-sans">
       
-      {/* 🟢 CHAT WINDOW */}
-      <div 
-        className={`
-          transition-all duration-300 ease-in-out transform origin-bottom-right 
-          ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4 pointer-events-none'} 
-          mb-3
-        `}
-      >
-        <div className="bg-white dark:bg-slate-900 w-[280px] md:w-[300px] h-[380px] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden">
-          
-          {/* HEADER */}
-          <div className="bg-teal-600 p-3 flex justify-between items-center text-white shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="bg-white/20 p-1 rounded-lg">
-                <Bot size={16} className="text-white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-xs tracking-wide">FindMeWork AI</h3>
-                <div className="flex items-center gap-1 opacity-90">
-                  <span className="w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse"></span>
-                  <p className="text-[10px] font-medium">Online</p>
-                </div>
-              </div>
-            </div>
-            
-            <button 
-              onClick={() => setIsOpen(false)} 
-              className="hover:bg-white/20 p-1.5 rounded-full transition-all active:scale-95"
-            >
-              <X size={16} />
-            </button>
-          </div>
-
-          {/* MESSAGES */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50 dark:bg-slate-950/50">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-1 duration-200`}>
-                {msg.role === 'bot' && (
-                   <div className="w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center mr-2 mt-auto shrink-0">
-                     <Sparkles size={12} className="text-teal-600 dark:text-teal-400" />
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            // 🔥 COMPACT MOBILE SIZE
+            className="w-[85vw] sm:w-[360px] h-[450px] sm:h-[500px] bg-white dark:bg-[#0A192F] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 flex flex-col overflow-hidden"
+          >
+            {/* HEADER */}
+            <div className="bg-slate-900 p-3 sm:p-4 flex justify-between items-center border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                   <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-tr from-teal-500 to-teal-700 rounded-full flex items-center justify-center shadow-lg">
+                      <Bot size={18} className="text-white" />
                    </div>
-                )}
-                <div className={`max-w-[85%] px-3 py-2 text-xs shadow-sm leading-relaxed ${
-                  msg.role === 'user' 
-                    ? 'bg-teal-600 text-white rounded-2xl rounded-br-none' 
-                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-gray-700 text-slate-700 dark:text-slate-200 rounded-2xl rounded-bl-none'
-                }`}>
-                  {msg.text}
+                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-slate-900 rounded-full"></span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm">FindMeWork AI</h3>
+                  <p className="text-[10px] sm:text-xs text-slate-400">Online & Ready</p>
                 </div>
               </div>
-            ))}
-            {isTyping && (
-              <div className="flex justify-start items-center animate-in fade-in duration-200">
-                 <div className="w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center mr-2"><Sparkles size={12} className="text-teal-600" /></div>
-                 <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-gray-700 px-3 py-2 rounded-2xl rounded-bl-none shadow-sm flex gap-1 items-center">
-                    <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce"></span>
-                    <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce delay-75"></span>
-                    <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce delay-150"></span>
-                 </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* INPUT */}
-          <div className="p-3 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-gray-800">
-            {messages.length < 3 && (
-                <div className="flex gap-2 overflow-x-auto no-scrollbar mb-2">
-                {suggestions.map((s, i) => (
-                    <button key={i} onClick={() => handleSend(s)} className="whitespace-nowrap px-2.5 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-[10px] font-medium text-slate-600 dark:text-slate-300 hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                    {s}
-                    </button>
-                ))}
-                </div>
-            )}
-            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 p-1 pl-3 rounded-full border border-gray-200 dark:border-gray-700 focus-within:border-teal-500 transition-all">
-              <input className="flex-1 bg-transparent text-xs outline-none text-slate-800 dark:text-white placeholder:text-slate-400" placeholder="Ask me..." value={input} onChange={(e) => setInput(e.target.value)} />
-              <button type="submit" disabled={!input.trim() || isTyping} className="bg-teal-600 text-white p-1.5 rounded-full hover:bg-teal-700 active:scale-95 disabled:opacity-50 transition-all">
-                {input.trim() ? <Send size={14} /> : <Zap size={14} />}
+              <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                 <Minus size={20} />
               </button>
-            </form>
-          </div>
-        </div>
-      </div>
+            </div>
 
-      {/* 🟣 BUTTON */}
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className={`
-            relative group flex items-center justify-center w-12 h-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 
-            ${isOpen ? 'bg-slate-800 rotate-90 scale-90' : 'bg-teal-600 hover:-translate-y-1'}
-        `}
-      >
-        {!isOpen && (
-          <span className="absolute top-0 right-0 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
-          </span>
+            {/* MESSAGES */}
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 bg-gray-50 dark:bg-[#0A192F]/50 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`
+                    max-w-[85%] p-3 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-sm
+                    ${msg.sender === 'user' 
+                      ? 'bg-teal-600 text-white rounded-br-none' // 🔥 GREEN THEME FOR USER
+                      : 'bg-white dark:bg-[#112240] text-slate-700 dark:text-gray-200 border border-gray-200 dark:border-white/5 rounded-bl-none'}
+                  `}>
+                    {msg.text}
+                    {msg.link && (
+                      <Link href={msg.link} className="mt-2 block">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 px-3 py-2 rounded-lg hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors w-full justify-center border border-teal-100 dark:border-teal-500/20">
+                           {msg.linkText} <ArrowRight size={12} />
+                        </span>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              {isTyping && (
+                <div className="flex justify-start">
+                   <div className="bg-white dark:bg-[#112240] border border-gray-200 dark:border-white/5 p-3 rounded-2xl rounded-bl-none flex gap-1.5 shadow-sm">
+                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0 }} className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
+                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
+                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }} className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
+                   </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* INPUT */}
+            <div className="p-3 bg-white dark:bg-[#0A192F] border-t border-gray-100 dark:border-white/10">
+              <div className="flex gap-2 overflow-x-auto pb-2 mb-1 scrollbar-hide">
+                 {SUGGESTIONS.map((chip, idx) => (
+                    <button 
+                      key={idx}
+                      onClick={() => handleSendMessage(chip)}
+                      className="whitespace-nowrap px-3 py-1 bg-gray-100 dark:bg-white/5 hover:bg-teal-50 dark:hover:bg-teal-900/20 text-slate-600 dark:text-slate-300 text-[10px] sm:text-xs font-medium rounded-full border border-gray-200 dark:border-white/10 transition-colors"
+                    >
+                      {chip}
+                    </button>
+                 ))}
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputText); }} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1 bg-gray-50 dark:bg-[#112240] text-slate-900 dark:text-white text-xs sm:text-sm rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50 border border-gray-200 dark:border-white/10"
+                />
+                <button 
+                  type="submit"
+                  disabled={!inputText.trim() || isTyping}
+                  className="bg-teal-600 hover:bg-teal-500 text-white p-2 sm:p-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-teal-600/20"
+                >
+                  <Send size={16} className="sm:w-[18px] sm:h-[18px]" />
+                </button>
+              </form>
+            </div>
+          </motion.div>
         )}
-        <div className="text-white">
-            {isOpen ? <X size={20} /> : <MessageSquare size={20} />}
-        </div>
-      </button>
+      </AnimatePresence>
+
+      {/* 🔥 FLOATING BUTTON (Green Theme + Compact) */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="relative w-12 h-12 sm:w-14 sm:h-14 bg-teal-600 hover:bg-teal-500 text-white rounded-full flex items-center justify-center shadow-2xl shadow-teal-900/30 transition-colors z-50 group"
+      >
+        {isOpen ? <X size={22} /> : <MessageCircle size={24} />}
+        
+        {!isOpen && (
+            <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white dark:border-[#0A192F] rounded-full animate-pulse"></span>
+        )}
+
+        <AnimatePresence>
+          {isHovered && !isOpen && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="absolute right-14 sm:right-16 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap border border-gray-100 dark:border-white/10"
+            >
+               Chat with AI 🤖
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
     </div>
   );
 }

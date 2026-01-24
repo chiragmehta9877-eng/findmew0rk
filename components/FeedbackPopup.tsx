@@ -12,7 +12,7 @@ export default function FeedbackPopup() {
   useEffect(() => {
     setIsMounted(true);
     
-    // 🔥 Updated: 1 Minute delay (60000 milliseconds)
+    // 🔥 Updated: 5 Minutes delay (300,000 milliseconds)
     const timer = setTimeout(() => {
         // Agar aap chahte hain ki user ko sirf ek baar dikhe session me, 
         // toh neeche wali lines uncomment kar dena:
@@ -21,7 +21,7 @@ export default function FeedbackPopup() {
         // if (!hasSeen) {
             setIsVisible(true);
         // }
-    }, 60000); // <--- Yahan 60000 kar diya hai (1 Minute)
+    }, 300000); // <--- Yahan 300000 kar दिया है (5 Minutes)
 
     return () => clearTimeout(timer);
   }, []);

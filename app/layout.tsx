@@ -5,7 +5,8 @@ import AuthProvider from "@/components/SessionProvider";
 import { connectToDB } from "@/lib/mongodb";
 import Setting from "@/models/Setting";
 import FeedbackPopup from "@/components/FeedbackPopup";
-import SupportPopup from "@/components/SupportPopup"; // ✅ Imported
+import SupportPopup from "@/components/SupportPopup"; 
+import NewsletterPopup from "@/components/NewsletterPopup"; // ✅ Imported New Popup
 import MaintenanceListener from "@/components/MaintenanceListener";
 import CookieConsent from "@/components/CookieConsent";
 import Footer from "@/components/Footer";
@@ -21,12 +22,8 @@ export const revalidate = 0;
 export const metadata: Metadata = {
   title: "FindMeWork",
   description: "Find jobs hidden in the noise.",
-  // 🔥 MANUAL LINKING (Sabse Pakka Tarika)
-  icons: {
-    icon: "/logo.png",      
-    shortcut: "/logo.png", 
-    apple: "/logo.png",    
-  },
+  // 🔥 NOTE: 'icons' section hata diya hai.
+  // Jab file 'app/favicon.ico' mein hoti hai, Next.js AUTOMATICALLY use detect kar leta hai.
 };
 
 export default async function RootLayout({
@@ -85,7 +82,8 @@ export default async function RootLayout({
         
         {/* 🔥 Global Popups */}
         <FeedbackPopup />
-        <SupportPopup /> {/* ✅ Added Here */}
+        <NewsletterPopup /> {/* ✅ Added Newsletter Here */}
+        <SupportPopup />
         <CookieConsent />
         
       </body>

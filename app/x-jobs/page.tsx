@@ -117,6 +117,7 @@ function XJobsContent() {
   }, [currentPage]);
 
   const toggleExpand = (e: React.MouseEvent, id: string) => {
+    e.preventDefault(); 
     e.stopPropagation(); 
     setExpandedId(expandedId === id ? null : id);
   };
@@ -215,8 +216,9 @@ function XJobsContent() {
                                     <span className="text-[10px] font-bold px-2 py-1 rounded uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                                       {job.category || "Job"}
                                     </span>
+                                    {/* 🔥 CHANGED: 'Email Verified' to 'Email Included' */}
                                     <span className="text-[9px] flex items-center gap-0.5 text-green-600 dark:text-green-400 font-bold uppercase tracking-tighter">
-                                      <CheckCircle size={10} /> Email Verified
+                                      <CheckCircle size={10} /> Email Included
                                     </span>
                                   </div>
                               </div>
