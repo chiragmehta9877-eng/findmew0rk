@@ -1,46 +1,49 @@
 'use client';
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 
-export default function MaintenanceListener({ currentStatus }: { currentStatus: boolean }) {
+export default function MaintenanceListener() {
+  const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
+    // Admin routes ko disturb mat karo
+    if (pathname.startsWith('/admin')) return;
+
     const checkStatus = async () => {
       try {
-        // 🔥 UPDATE: Cache hatane ke liye timestamp aur headers lagaye hain
-        // Taki browser purana status na pakde
-        const res = await fetch(`/api/maintenance-check?t=${new Date().getTime()}`, {
-            cache: 'no-store',
-            headers: {
-                'Pragma': 'no-cache',
-                'Cache-Control': 'no-cache'
-            }
-        });
-
-        if (!res.ok) return;
-
+        // Timestamp lagaya taaki browser cache na kare
+        const res = await fetch(`/api/settings/check?t=${Date.now()}`, { cache: 'no-store' });
         const data = await res.json();
+        
+        const isMaintenance = data.isMaintenance;
+        const isOnMaintenancePage = pathname === '/maintenance';
 
-        // 🔥 Agar Database ka status aur Current page ka status alag hai
-        // Matlab Admin ne button daba diya hai -> Page Reload karo!
-        if (data.isMaintenance !== currentStatus) {
-          console.log("Status Changed! Reloading...");
-          
-          // Full Hard Reload taki Layout.tsx wapis se DB check kare
-          window.location.reload(); 
+        console.log(`Listener Check: Mode=${isMaintenance}, CurrentPage=${pathname}`);
+
+        // 🔴 CASE 1: Maintenance ON hai, lekin user abhi andar hai -> Bahar pheko
+        if (isMaintenance && !isOnMaintenancePage) {
+           console.warn("⛔ Redirecting to Maintenance...");
+           window.location.href = "/maintenance"; 
         }
+
+        // 🟢 CASE 2: Maintenance OFF hai, lekin user abhi bhi Maintenance page par atka hai -> Wapis lao
+        if (!isMaintenance && isOnMaintenancePage) {
+           console.log("✅ Site is Back! Redirecting Home...");
+           window.location.href = "/"; // Force Reload to clear UI states
+        }
+
       } catch (error) {
-        console.error("Maintenance check failed (ignore if offline)", error);
+        console.error("Listener Error:", error);
       }
     };
 
-    // ⏱️ Har 5 second (5000ms) me check karega
-    const interval = setInterval(checkStatus, 5000);
-
+    // Har 2 second mein check karo
+    const interval = setInterval(checkStatus, 2000);
+    
     return () => clearInterval(interval);
-  }, [currentStatus, router]);
+  }, [pathname, router]);
 
-  return null; // Ye component screen par kuch nahi dikhata, bas background me kaam karta hai
+  return null;
 }

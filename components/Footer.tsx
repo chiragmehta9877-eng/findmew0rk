@@ -46,9 +46,7 @@ export default function Footer() {
                 </span>
             </Link>
 
-            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
-              We help you find jobs hidden in the noise. Connect with top companies and startups instantly.
-            </p>
+          
             
             {/* Social Icons (Twitter Removed -> X Added) */}
             <div className="flex items-center gap-4 pt-2">

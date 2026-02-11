@@ -9,6 +9,7 @@ import JobHologram from '@/components/home/JobHologram';
 import HeroSearch from '@/components/home/HeroSearch'; 
 import { useSession } from 'next-auth/react'; 
 import AlertModal from '@/components/AlertModal';
+import NewsletterBanner from "@/components/NewsletterBanner";
 
 // --- Animation Variants ---
 const fadeInUp: Variants = {
@@ -70,6 +71,11 @@ export default function HomePage() {
       ========================================= */}
       <section className="relative pt-10 pb-20 lg:pt-20 lg:pb-32 overflow-hidden border-b border-gray-200 dark:border-white/5">
         
+        {/* 🔥 3JS-STYLE PARTICLE BACKGROUND */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+            <ParticleBackground />
+        </div>
+
         {/* Glows: Hidden on Mobile */}
         <motion.div 
           animate={{ x: [0, 50, 0], y: [0, -50, 0], opacity: [0.3, 0.6, 0.3] }}
@@ -96,19 +102,29 @@ export default function HomePage() {
               <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100/50 border border-teal-200 text-teal-700 dark:bg-teal-400/5 dark:border-teal-400/20 dark:text-teal-400 text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-sm">
                 <span className="w-2 h-2 bg-teal-600 dark:bg-teal-400 rounded-full md:animate-ping"></span>
                 <span className="w-2 h-2 bg-teal-600 dark:bg-teal-400 rounded-full absolute md:hidden"></span>
-                System Online: Scanning Feeds
+                Live Job Posts Detected in Real Time
               </motion.div>
               
-              <motion.h1 variants={fadeInUp} className="text-5xl lg:text-7xl font-bold text-slate-900 dark:text-white leading-[1.1] tracking-tight mb-6">
-                Find work <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 dark:from-teal-400 dark:via-blue-400 dark:to-purple-500 animate-gradient-x">
-                  Hidden in the Noise.
-                </span>
-              </motion.h1>
+          <motion.h1 
+  variants={fadeInUp} 
+  className="text-4xl lg:text-6xl font-extrabold text-slate-900 dark:text-white leading-tight tracking-tight mb-6"
+>
+  Connect Directly with Hiring Managers
+  
+  {/* 1. Reduced size to 'text-xl lg:text-3xl' so the main headline dominates.
+      2. Added 'pb-2' and 'leading-normal' to stop the text/gradient from getting cut off. 
+  */}
+  <span className="block mt-3 text-xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 dark:from-teal-400 dark:via-blue-400 dark:to-purple-500 animate-gradient-x pb-2 leading-normal">
+    No Portals. No Easy Apply. No Middlemen.
+  </span>
+</motion.h1>
               
-              <motion.p variants={fadeInUp} className="text-lg text-slate-600 dark:text-gray-400 max-w-xl mb-8 leading-relaxed">
-                FindMeWork uses AI to filter through chaotic Twitter & LinkedIn posts, extracting real job opportunities.
-              </motion.p>
+              <motion.p 
+  variants={fadeInUp} 
+  className="text-lg md:text-xl text-slate-700 dark:text-gray-300 max-w-lg mt-0 mb-6 leading-snug"
+>
+  FindMeWork scans Twitter (X) for real job posts shared by founders, recruiters, and hiring managers, then lets you submit your profile straight to them.
+</motion.p>
 
               <motion.div variants={fadeInUp} className="w-full">
                 <HeroSearch onSearch={handleHomeSearch} />
@@ -151,18 +167,7 @@ export default function HomePage() {
                 />
               </motion.div>
 
-              {/* Stats */}
-              <motion.div variants={fadeInUp} className="mt-12 flex justify-center lg:justify-start items-center gap-8 border-t border-gray-200 dark:border-white/5 pt-8 w-full">
-                 <div>
-                    <span className="block text-2xl font-bold text-slate-900 dark:text-white font-mono">300+</span>
-                    <span className="text-xs text-slate-500 dark:text-gray-500 uppercase tracking-wider">Daily Posts</span>
-                 </div>
-                 <div className="w-px h-8 bg-gray-300 dark:bg-white/10"></div>
-                 <div>
-                    <span className="block text-2xl font-bold text-slate-900 dark:text-white font-mono">98%</span>
-                    <span className="text-xs text-slate-500 dark:text-gray-500 uppercase tracking-wider">AI Accuracy</span>
-                 </div>
-              </motion.div>
+            
             </motion.div>
 
             {/* Right: Hologram (PC Only) */}
@@ -193,8 +198,12 @@ export default function HomePage() {
             className="text-center max-w-3xl mx-auto mb-16"
           >
             <h2 className="text-sm font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest mb-2">The Intelligence Engine</h2>
-            <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">How we find what others miss.</h3>
-            <p className="text-slate-600 dark:text-gray-400">Traditional job boards are crowded. We go where the founders are.</p>
+            <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">How we find jobs before they hit job boards!
+</h3>
+            <p className="text-slate-600 dark:text-gray-400">
+  Traditional job boards are overcrowded. <br />
+  FindMeWork tracks where hiring actually happens, in public posts by founders and hiring managers.
+</p>
           </motion.div>
 
           <motion.div 
@@ -212,7 +221,8 @@ export default function HomePage() {
               </div>
               <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Global Scan</h4>
               <p className="text-sm text-slate-600 dark:text-gray-400 leading-relaxed">
-                Our bots monitor millions of tweets, LinkedIn posts, and threads 24/7. We listen for keywords like "Hiring", "DM me", and "Founding Engineer".
+                FindMeWork monitor public hiring posts across Twitter (X) in real time.
+
               </p>
             </motion.div>
 
@@ -224,7 +234,7 @@ export default function HomePage() {
               </div>
               <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-3">AI Context Extraction</h4>
               <p className="text-sm text-slate-600 dark:text-gray-400 leading-relaxed">
-                Raw text is messy. Our LLM parses the noise to extract Role, Tech Stack, Salary, and Application Method automatically.
+Most hiring posts are unstructured and easy to miss. FindMeWork's Al automatically extracts the role, required skills, location, salary (when mentioned), and contact details.
               </p>
             </motion.div>
 
@@ -236,7 +246,7 @@ export default function HomePage() {
               </div>
               <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Direct Connect</h4>
               <p className="text-sm text-slate-600 dark:text-gray-400 leading-relaxed">
-                No middleman. We give you the direct link to the Tweet or LinkedIn post so you can DM the founder immediately.
+                No recruiters, tracking system & redirects. You get the original post and contact path, so you can reach the hiring manager directly.
               </p>
             </motion.div>
           </motion.div>
@@ -267,19 +277,19 @@ export default function HomePage() {
                className="lg:w-1/2" 
             >
               <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-8 leading-tight">
-                Stop applying to <br/> 
-                <span className="text-red-500 decoration-red-500/30 underline decoration-wavy underline-offset-4">ghost jobs.</span>
+                Stop Applying to <br/> 
+                <span className="text-red-500 decoration-red-500/30 underline decoration-wavy underline-offset-4">Ghost Jobs.</span>
               </h2>
               <p className="text-lg text-slate-600 dark:text-gray-300 mb-10 max-w-lg leading-relaxed">
-                Most job boards are graveyards. FindMeWork connects you to opportunities that are alive, urgent, and often unlisted.
+                FindMeWork shows only jobs that are real, and posted by the people actually hiring.
               </p>
               
               <ul className="space-y-6"> 
                 {[
-                  "Real-time updates every 15 minutes",
-                  "Filter by Tech Stack (React, Node, Python)",
-                  "Direct access to Hiring Managers",
-                  "Verified 'Hiring' status via AI"
+                  "New hiring posts detected every hour.",
+                  "Direct access to hiring managers",
+                  "Filter by real tech stacks",
+                  "Al-verified hiring intent"
                 ].map((item, i) => (
                   <motion.li 
                     key={i} 
@@ -294,49 +304,52 @@ export default function HomePage() {
                 ))}
               </ul>
 
- <Link 
-  href="/x-jobs" 
-  className="mt-10 px-10 py-4 w-fit inline-flex items-center gap-3 rounded-full border border-slate-300 dark:border-white/10 hover:border-teal-500 dark:hover:border-teal-400 text-slate-900 dark:text-white font-bold transition-colors group"
->
-  Explore Features <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-</Link>
+             <Link 
+              href="/x-jobs" 
+              className="mt-10 px-10 py-4 w-fit inline-flex items-center gap-3 rounded-full border border-slate-300 dark:border-white/10 hover:border-teal-500 dark:hover:border-teal-400 text-slate-900 dark:text-white font-bold transition-colors group"
+             >
+              Explore Features <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+             </Link>
             </motion.div>
 
             {/* Right Column: Cards */}
             <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="lg:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-6"
-            >
-               <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5">
-                  <Shield size={32} className="text-teal-500 mb-4" />
-                  <h4 className="font-bold text-xl dark:text-white mb-3">Zero Spam</h4>
-                  <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">We auto-block recruiters and agencies. Only direct company posts.</p>
-               </div>
-               
-               <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 sm:mt-12">
-                  <Layers size={32} className="text-blue-500 mb-4" />
-                  <h4 className="font-bold text-xl dark:text-white mb-3">Smart Sorting</h4>
-                  <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">Jobs are categorized by skill level: Junior, Senior, and Founder.</p>
-               </div>
-               
-               <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5">
-                  <Zap size={32} className="text-yellow-500 mb-4" />
-                  <h4 className="font-bold text-xl dark:text-white mb-3">Lightning Fast</h4>
-                  <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">Be the first to apply. Alerts are sent the moment a tweet goes live.</p>
-               </div>
-               
-               <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 sm:mt-12">
-                  <Briefcase size={32} className="text-purple-500 mb-4" />
-                  <h4 className="font-bold text-xl dark:text-white mb-3">Contract Work</h4>
-                  <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">Special filters for Freelancers and Fractional roles.</p>
-               </div>
-            </motion.div>
+  initial={{ opacity: 0, x: 20 }}
+  whileInView={{ opacity: 1, x: 0 }}
+  viewport={{ once: true }}
+  className="lg:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-6"
+>
+  {/* Zero Spam */}
+  <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center">
+     <Shield size={56} className="text-teal-500 mb-4" strokeWidth={2} />
+     <h4 className="font-bold text-2xl dark:text-white">Zero Spam</h4>
+  </div>
+  
+  {/* Smart Sorting */}
+  <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center sm:mt-12">
+     <Layers size={56} className="text-blue-500 mb-4" strokeWidth={2} />
+     <h4 className="font-bold text-2xl dark:text-white">Smart Sorting</h4>
+  </div>
+  
+  {/* Lightning Fast */}
+  <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center">
+     <Zap size={56} className="text-yellow-500 mb-4" strokeWidth={2} />
+     <h4 className="font-bold text-2xl dark:text-white">Lightning Fast</h4>
+  </div>
+  
+  {/* Contract Work */}
+  <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center sm:mt-12">
+     <Briefcase size={56} className="text-purple-500 mb-4" strokeWidth={2} />
+     <h4 className="font-bold text-2xl dark:text-white">Contract Work</h4>
+  </div>
+</motion.div>
 
           </div>
         </div>
       </section>
+
+      {/* 🔥 ADDED: Newsletter Banner */}
+      <NewsletterBanner />
 
       {/* =========================================
           🔥 SECTION: CTA (Pulse Removed on Mobile)
@@ -349,7 +362,6 @@ export default function HomePage() {
            transition={{ duration: 20, repeat: Infinity }}
            className="hidden md:block absolute inset-0 bg-teal-600 dark:bg-teal-900/30 backdrop-blur-3xl opacity-50"
          />
-         
          <div className="container mx-auto px-4 relative z-10 text-center">
             <motion.h2 
               initial={{ opacity: 0, y: 20 }}
@@ -377,4 +389,144 @@ export default function HomePage() {
 
     </div>
   );
+}
+
+// ----------------------------------------------------
+// 🔥 SEXY GLOWING PARTICLE NETWORK (UPGRADED)
+// ----------------------------------------------------
+function ParticleBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mouseRef = useRef({ x: -9999, y: -9999 });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let particles: Particle[] = [];
+    let animationFrameId: number;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initParticles();
+    };
+
+    class Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      baseColor: string;
+
+      constructor() {
+        this.x = Math.random() * canvas!.width;
+        this.y = Math.random() * canvas!.height;
+        // Slower, smoother movement
+        this.vx = (Math.random() - 0.5) * 0.3; 
+        this.vy = (Math.random() - 0.5) * 0.3;
+        this.size = Math.random() * 2.5 + 0.5;
+        // Cyberpunk Teal/Blue mix
+        const colors = ['#2DD4BF', '#0EA5E9', '#6366F1']; 
+        this.baseColor = colors[Math.floor(Math.random() * colors.length)];
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Bounce off edges
+        if (this.x < 0 || this.x > canvas!.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas!.height) this.vy *= -1;
+      }
+
+      draw() {
+        if(!ctx) return;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.baseColor;
+        // 🔥 GLOW EFFECT
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = this.baseColor;
+        ctx.fill();
+        // Reset shadow for performance
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    const initParticles = () => {
+      particles = [];
+      const count = window.innerWidth < 768 ? 40 : 100;
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle());
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseRef.current = { 
+            x: e.clientX - rect.left, 
+            y: e.clientY - rect.top 
+        };
+    };
+
+    const animate = () => {
+      if(!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      particles.forEach((p, index) => {
+        p.update();
+        p.draw();
+        
+        // 1. Draw connections between particles
+        for (let j = index + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx = p.x - p2.x;
+          const dy = p.y - p2.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 120) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(45, 212, 191, ${0.15 - distance / 800})`; // Teal tint
+            ctx.lineWidth = 0.5;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+
+        // 2. Draw connections to mouse
+        const dxMouse = p.x - mouseRef.current.x;
+        const dyMouse = p.y - mouseRef.current.y;
+        const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+
+        if (distMouse < 200) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(14, 165, 233, ${0.4 - distMouse / 500})`; // Blue highlight
+            ctx.lineWidth = 0.8;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(mouseRef.current.x, mouseRef.current.y);
+            ctx.stroke();
+        }
+      });
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', handleMouseMove);
+    
+    resize();
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="w-full h-full opacity-80" />;
 }

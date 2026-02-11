@@ -17,7 +17,7 @@ const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 // 🔥 CORS Setup
 function setCorsHeaders(res: NextResponse) {
   res.headers.set('Access-Control-Allow-Origin', '*');
-  res.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   return res;
 }
@@ -65,6 +65,51 @@ function getSmartDbQuery(source: string, category: string) {
     return query;
 }
 
+// ============================================================
+// 🔥 PATCH: HANDLE VIEWS & CLICKS
+// ============================================================
+export async function PATCH(req: Request) {
+  try {
+    await connectToDB();
+    const body = await req.json();
+
+    console.log("⚡ PATCH REQUEST (Main Site):", body);
+
+    if (!body.job_id) {
+        return setCorsHeaders(NextResponse.json({ success: false, message: "No Job ID" }, { status: 400 }));
+    }
+
+    let updateField = {};
+    if (body.action === 'view') updateField = { $inc: { views: 1 } };
+    else if (body.action === 'click') updateField = { $inc: { clicks: 1 } };
+    else return setCorsHeaders(NextResponse.json({ success: false, message: "Invalid Action" }, { status: 400 }));
+
+    // Search by job_id OR _id to be safe
+    const job = await Job.findOneAndUpdate(
+        { 
+            $or: [
+                { job_id: body.job_id }, 
+                { _id: body.job_id }     
+            ]
+        }, 
+        updateField,
+        { new: true } 
+    );
+
+    if (!job) {
+        return setCorsHeaders(NextResponse.json({ success: false, message: "Job not found" }, { status: 404 }));
+    }
+
+    return setCorsHeaders(NextResponse.json({ success: true, views: job.views, clicks: job.clicks }));
+
+  } catch (error: any) { 
+      return setCorsHeaders(NextResponse.json({ success: false, error: error.message }, { status: 500 })); 
+  }
+}
+
+// ============================================================
+// GET: FETCH JOBS
+// ============================================================
 export async function GET(req: Request) {
   try {
     await connectToDB();
@@ -152,7 +197,10 @@ export async function GET(req: Request) {
                       category: category,
                       job_city: location,
                       email: emailMatch[0],
-                      posted_at: new Date()
+                      posted_at: new Date(),
+                      // Default views/clicks
+                      views: 0,
+                      clicks: 0
                   });
                   seenIds.add(item.tweet_id);
               }
@@ -179,8 +227,8 @@ export async function GET(req: Request) {
     // Final Fetch
     // 🔥 UPDATED: Limit set to 1000
     const finalJobs = await Job.find(dbQuery)
-                           .sort({ createdAt: -1 })
-                           .limit(1000); 
+                            .sort({ createdAt: -1 })
+                            .limit(1000); 
 
     return setCorsHeaders(NextResponse.json({ 
         success: true, 
