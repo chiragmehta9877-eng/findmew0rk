@@ -1,6 +1,6 @@
 import { connectToDB } from "@/lib/mongodb";
 import Setting from "@/models/Setting";
-import { headers } from 'next/headers'; // 👈 Headers import karo domain check karne ke liye
+import { headers } from 'next/headers'; 
 
 export async function getMaintenanceStatus() {
   try {
@@ -9,8 +9,8 @@ export async function getMaintenanceStatus() {
     
     if (!settings) return false;
 
-    // 🕵️‍♂️ Domain Detect karo
-    const headersList = headers();
+    // 🕵️‍♂️ Fixed: Added 'await' before headers()
+    const headersList = await headers();
     const domain = headersList.get('host') || "";
 
     // Logic: Domain ke hisab se sahi key uthao
@@ -20,12 +20,11 @@ export async function getMaintenanceStatus() {
         // @ts-ignore
         isMaintenance = settings.status.localhost;
     } 
-    else if (domain.includes("netlify.app")) { // Netlify domain pattern
+    else if (domain.includes("netlify.app")) { 
         // @ts-ignore
         isMaintenance = settings.status.netlify;
     } 
     else {
-        // Baki sab (Assuming Production) e.g., findmework.com
         // @ts-ignore
         isMaintenance = settings.status.production;
     }
