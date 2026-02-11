@@ -22,7 +22,8 @@ export async function GET() {
       status: updated.status 
     });
 
-  } catch (error) {
-    return NextResponse.json({ error: error.message });
+  } catch (error: any) {
+    // Fixed: Added ': any' to prevent TypeScript build errors
+    return NextResponse.json({ error: error.message || "Unknown error" }, { status: 500 });
   }
 }
