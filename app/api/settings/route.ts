@@ -69,6 +69,10 @@ export async function POST(req: Request) {
 
     } catch (error) {
         console.error("POST Settings Error:", error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        
+        // ✅ FIXED: Safely extract error message for TypeScript
+        const errorMessage = error instanceof Error ? error.message : "Unknown Error";
+        
+        return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }
 }
