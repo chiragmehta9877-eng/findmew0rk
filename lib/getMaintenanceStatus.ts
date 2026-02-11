@@ -9,11 +9,10 @@ export async function getMaintenanceStatus() {
     
     if (!settings) return false;
 
-    // 🕵️‍♂️ Fixed: Added 'await' before headers()
+    // 👇 FIXED: Added 'await' here because headers() is a Promise now
     const headersList = await headers();
     const domain = headersList.get('host') || "";
 
-    // Logic: Domain ke hisab se sahi key uthao
     let isMaintenance = false;
 
     if (domain.includes("localhost")) {

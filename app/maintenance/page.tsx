@@ -2,13 +2,13 @@
 
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
-// 👇 Added 'Variants' to import
+// 👇 FIXED: Added 'Variants' to the import
 import { motion, Variants } from 'framer-motion'; 
 import { Twitter, RefreshCw, Zap, ArrowRight, CheckCircle2, Linkedin, Layers, Rocket } from 'lucide-react';
 import MaintenanceListener from '@/components/MaintenanceListener';
 
 // --- Animation Variants ---
-// 👇 Added ': Variants' type annotation here
+// 👇 FIXED: Added ': Variants' type so TypeScript accepts "easeOut"
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 30 }, 
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } } 
