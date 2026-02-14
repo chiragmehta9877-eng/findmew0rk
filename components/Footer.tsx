@@ -54,7 +54,7 @@ export default function Footer() {
               
               {/* 🔥 X LOGO ADDED HERE */}
               <a 
-                href="https://x.com/findmework" 
+                href="https://x.com/findmew0rk" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 aria-label="X (Twitter)"
@@ -69,10 +69,10 @@ export default function Footer() {
 
           {/* COLUMN 2: Company */}
           <div>
-            <h3 className="text-slate-900 dark:text-white font-bold mb-4">Company</h3>
+            <h3 className="text-slate-900 dark:text-white font-bold mb-4">Account</h3>
             <ul className="space-y-3 text-sm text-slate-500 dark:text-slate-400">
-              <li><FooterLink href="/about">About Us</FooterLink></li>
-              <li><FooterLink href="mailto:support@findmework.com">Contact Support</FooterLink></li>
+              <li><FooterLink href="/dashboard">Dashboard</FooterLink></li>
+              
             </ul>
           </div>
 
@@ -81,15 +81,16 @@ export default function Footer() {
             <h3 className="text-slate-900 dark:text-white font-bold mb-4">Jobs</h3>
             <ul className="space-y-3 text-sm text-slate-500 dark:text-slate-400">
               <li><FooterLink href="/x-jobs">Verified Feeds</FooterLink></li>
-              <li><FooterLink href="/dashboard">Dashboard</FooterLink></li>
+              
             </ul>
           </div>
 
-          {/* COLUMN 4: Legal */}
+          {/* COLUMN 4: Connect with Us */}
           <div>
-            <h3 className="text-slate-900 dark:text-white font-bold mb-4">Legal</h3>
+            <h3 className="text-slate-900 dark:text-white font-bold mb-4">Connect with Us</h3>
             <ul className="space-y-3 text-sm text-slate-500 dark:text-slate-400">
-              <li><FooterLink href="/privacy-policy">Privacy Policy</FooterLink></li>
+              <li><FooterLink href="/contact">Contact Support</FooterLink></li>
+              <li><FooterLink href="/support">Support Us</FooterLink></li>
             </ul>
           </div>
 

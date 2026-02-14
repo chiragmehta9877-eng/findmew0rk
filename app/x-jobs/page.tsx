@@ -1,7 +1,7 @@
 'use client';
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { MapPin, ArrowRight, Filter, ChevronLeft, ChevronRight, X, CheckCircle, ChevronDown, ChevronUp, Zap, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar'; 
@@ -17,7 +17,6 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
 
   const steps = [
     { 
-      // 🔥 Dynamic ID Logic handles Mobile vs Desktop inside useEffect
       id: 'tour-filters', 
       title: 'Smart Filters', 
       desc: 'Refine your search by Category, Source (Twitter), or Job Type right here.',
@@ -29,7 +28,7 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
     },
     { 
       id: 'tour-spotlight', 
-      title: '⚡ Spotlight Jobs', 
+      title: 'Spotlight Jobs', 
       desc: 'Look for the Green Glow! These are premium, high-priority hiring alerts.',
     },
     { 
@@ -40,7 +39,6 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
   ];
 
   const updatePosition = () => {
-    // 🔥 SMART ID SELECTION: Mobile Button vs Desktop Sidebar
     let targetId = steps[step].id;
     if (targetId === 'tour-filters') {
        targetId = window.innerWidth < 1024 ? 'tour-filters-mobile' : 'tour-filters-desktop';
@@ -60,7 +58,6 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
       });
       setIsVisible(true);
     } else {
-       // Skip if element not visible
        if (step < steps.length - 1) setStep(s => s + 1);
        else onComplete();
     }
@@ -69,7 +66,6 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
   useEffect(() => {
     updatePosition();
     
-    // Auto-scroll
     let targetId = steps[step].id;
     if (targetId === 'tour-filters') {
        targetId = window.innerWidth < 1024 ? 'tour-filters-mobile' : 'tour-filters-desktop';
@@ -96,59 +92,40 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
 
   if (!isVisible) return null;
 
-  // Mobile-Responsive Tooltip Positioning
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  
-  // Decide position (Above or Below based on screen space)
   const spaceBelow = window.innerHeight - (rect.top - window.scrollY + rect.height);
-  const showAbove = spaceBelow < 280; // If close to bottom, show above
+  const showAbove = spaceBelow < 280; 
 
   const tooltipTop = showAbove ? rect.top - 240 : rect.top + rect.height + 20;
   
-  // Center on mobile, Align with highlight on desktop
   let tooltipLeft = isMobile 
-    ? (window.innerWidth / 2) - (Math.min(window.innerWidth * 0.9, 384) / 2) // Center logic
-    : rect.left + (rect.width / 2) - 192; // 192 is half of w-96 (384px)
+    ? (window.innerWidth / 2) - (Math.min(window.innerWidth * 0.9, 384) / 2) 
+    : rect.left + (rect.width / 2) - 192; 
 
-  // Clamp Tooltip to screen edges
   if (tooltipLeft < 10) tooltipLeft = 10;
   if (tooltipLeft + 320 > window.innerWidth) tooltipLeft = window.innerWidth - 330;
 
 
   return (
     <div className="absolute inset-0 z-[9999] pointer-events-none h-full w-full">
-      
-      {/* 1. The Highlight Box (Absolute Positioned) */}
       <motion.div 
-        className="absolute rounded-xl border-4 border-[#10B981] z-50"
+        className="absolute rounded-xl border-4 border-[#10B981] z-50 transform-gpu"
         initial={false}
-        animate={{
-          top: rect.top - 4,
-          left: rect.left - 4,
-          width: rect.width + 8,
-          height: rect.height + 8
-        }}
+        animate={{ top: rect.top - 4, left: rect.left - 4, width: rect.width + 8, height: rect.height + 8 }}
         transition={{ type: "spring", stiffness: 180, damping: 25, mass: 0.8 }}
-        style={{
-            // The Giant Shadow Trick for Focus Mode
-            boxShadow: "0 0 0 99999px rgba(0, 0, 0, 0.75)" 
+        style={{ 
+            boxShadow: "0 0 0 99999px rgba(0, 0, 0, 0.75)",
+            WebkitTransform: "translateZ(0)"
         }}
       />
-
-      {/* 2. The Tooltip (Absolute Positioned) */}
       <motion.div 
         className="absolute z-[10000] w-[90vw] max-w-sm pointer-events-auto"
         initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ 
-          opacity: 1, 
-          scale: 1,
-          top: tooltipTop,
-          left: tooltipLeft
-        }}
+        animate={{ opacity: 1, scale: 1, top: tooltipTop, left: tooltipLeft }}
         transition={{ type: "spring", stiffness: 150, damping: 20 }}
       >
         <div className="bg-[#0f172a] border border-[#10B981] p-6 rounded-2xl shadow-2xl relative overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#10B981]/20 blur-3xl rounded-full pointer-events-none"></div>
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#10B981]/20 blur-3xl rounded-full pointer-events-none transform-gpu"></div>
           
           <div className="relative z-10">
             <div className="flex justify-between items-center mb-3">
@@ -160,11 +137,7 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
                 STEP {step + 1}/{steps.length}
               </span>
             </div>
-            
-            <p className="text-slate-300 text-sm leading-relaxed mb-6 font-medium">
-              {steps[step].desc}
-            </p>
-
+            <p className="text-slate-300 text-sm leading-relaxed mb-6 font-medium">{steps[step].desc}</p>
             <button 
               onClick={handleNext}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-[#10B981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white font-bold text-sm shadow-lg shadow-[#064e3b]/50 transition-all active:scale-95 flex items-center justify-center gap-2"
@@ -209,30 +182,64 @@ const MAIN_FILTERS = [
 
 const ITEMS_PER_PAGE = 12;
 
+// 🔥 SAFE LAYOUT EFFECT TO PREVENT NEXT.JS SSR WARNINGS
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
+
 function XJobsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const { data: session, status } = useSession(); 
   
   const [jobs, setJobs] = useState<any[]>([]); 
-  const [filteredJobs, setFilteredJobs] = useState<any[]>([]); 
 
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
-  const [activeMainFilter, setActiveMainFilter] = useState("job"); 
-  const [activeSubFilter, setActiveSubFilter] = useState("all"); 
+  const [activeMainFilter, setActiveMainFilter] = useState(searchParams.get('main') || "job"); 
+  const [activeSubFilter, setActiveSubFilter] = useState(searchParams.get('sub') || "all"); 
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || ""); 
+  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
   
-  const [searchQuery, setSearchQuery] = useState(""); 
-  const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
 
-  // 🔥 TOUR STATE
   const [showTour, setShowTour] = useState(false);
-
-  // 🔥 1. VIEW TRACKING STATE (Session Lock)
   const viewedJobs = useRef<Set<string>>(new Set());
+  const jobsHeadingRef = useRef<HTMLDivElement>(null);
+
+  // =========================================================
+  // 🔥 FIX: 0-MILLISECOND FLASH SCROLL (SYNC LAYOUT EFFECT)
+  // =========================================================
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+      }
+      // Paint hone se pehle seedha jump karega!
+      if (jobsHeadingRef.current) {
+        const yOffset = -120;
+        const elementY = jobsHeadingRef.current.getBoundingClientRect().top + window.scrollY + yOffset;
+        window.scrollTo({ top: elementY, behavior: 'auto' });
+      }
+    }
+  }, []); // Only run once exactly when component mounts
+
+  // 🔥 Smooth Scroll for Pagination & Filters ONLY
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (!loading && jobsHeadingRef.current) {
+      const yOffset = -120;
+      const elementY = jobsHeadingRef.current.getBoundingClientRect().top + window.scrollY + yOffset;
+      window.scrollTo({ top: elementY, behavior: 'smooth' });
+    }
+  }, [currentPage, activeMainFilter, activeSubFilter]);
+  // =========================================================
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -250,11 +257,8 @@ function XJobsContent() {
     setShowTour(false);
   };
 
-  // 🔥 2. HANDLE JOB CLICK (INCREMENT VIEWS)
   const handleJobClick = async (jobId: string) => {
     setActiveId(jobId);
-    
-    // Check session cache to prevent spamming views on same page load
     if (!viewedJobs.current.has(jobId)) {
         viewedJobs.current.add(jobId);
         try {
@@ -269,14 +273,9 @@ function XJobsContent() {
     }
   };
 
-  // 🔥 3. HANDLE APPLY CLICK (INCREMENT CLICKS + VIEWS)
   const handleApplyClick = async (e: React.MouseEvent, jobId: string, url: string) => {
-    e.stopPropagation(); // Stop parent expanding logic
-
-    // 1. Register View first (Kyunki apply kiya hai to view to kiya hi hoga)
+    e.stopPropagation(); 
     handleJobClick(jobId);
-
-    // 2. Register Click
     try {
         await fetch('/api/jobs', {
             method: 'PATCH',
@@ -286,16 +285,22 @@ function XJobsContent() {
     } catch (error) {
         console.error("Click increment failed", error);
     }
-    // Proceed to URL logic handled by Link wrapper or browser default
   };
 
-  // 1. URL CHECK
-  useEffect(() => {
-    const queryFromUrl = searchParams.get('search');
-    if (queryFromUrl) {
-        setSearchQuery(queryFromUrl);
-    }
-  }, [searchParams]);
+  const updateUrl = useCallback((updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    });
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  const handleSearch = (val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+    updateUrl({ search: val, page: '1' });
+  };
 
   useEffect(() => {
     const checkIsMobile = () => setIsMobile(window.innerWidth < 768);
@@ -303,14 +308,9 @@ function XJobsContent() {
     window.addEventListener('resize', checkIsMobile);
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
-  
-  const jobsHeadingRef = useRef<HTMLDivElement>(null);
 
-  // 2. FETCH API
-  const fetchJobs = (category: string) => {
+  const fetchJobs = () => {
     setLoading(true);
-    setCurrentPage(1);
-    
     fetch(`/api/jobs?limit=10000&t=${Date.now()}`) 
       .then(res => res.json())
       .then(data => {
@@ -322,9 +322,7 @@ function XJobsContent() {
                if (!aSpot && bSpot) return 1;
                return 0; 
             });
-
             setJobs(sortedJobs);
-            setFilteredJobs(sortedJobs); 
          }
          setLoading(false);
       })
@@ -335,12 +333,10 @@ function XJobsContent() {
   };
 
   useEffect(() => {
-    fetchJobs(activeMainFilter);
-  }, [activeMainFilter]);
+    fetchJobs();
+  }, []);
 
-
-  // 3. FILTER LOGIC
-  useEffect(() => {
+  const filteredJobs = useMemo(() => {
     let result = jobs;
 
     if (searchQuery.trim() !== "") {
@@ -407,16 +403,8 @@ function XJobsContent() {
         });
     }
 
-    setFilteredJobs(result);
-    setCurrentPage(1);
+    return result;
   }, [searchQuery, jobs, activeMainFilter, activeSubFilter]);
-
-
-  useEffect(() => {
-    if (jobsHeadingRef.current) {
-      jobsHeadingRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [currentPage]);
 
   const toggleExpand = (e: React.MouseEvent, id: string) => {
     e.preventDefault(); 
@@ -427,21 +415,37 @@ function XJobsContent() {
   const handleMainFilterClick = (id: string) => {
     setActiveMainFilter(id);
     setActiveSubFilter('all'); 
+    setCurrentPage(1);
+    updateUrl({ main: id, sub: 'all', page: '1' });
+  };
+
+  const handleSubFilterClick = (id: string) => {
+    setActiveSubFilter(id);
+    setCurrentPage(1);
+    updateUrl({ sub: id, page: '1' });
   };
 
   const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const currentJobs = filteredJobs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  const goToNextPage = () => { if (currentPage < totalPages) setCurrentPage(curr => curr + 1); };
-  const goToPrevPage = () => { if (currentPage > 1) setCurrentPage(curr => curr - 1); };
+  const goToNextPage = () => { 
+      if (currentPage < totalPages) {
+          setCurrentPage(curr => curr + 1); 
+          updateUrl({ page: String(currentPage + 1) });
+      }
+  };
+  const goToPrevPage = () => { 
+      if (currentPage > 1) {
+          setCurrentPage(curr => curr - 1); 
+          updateUrl({ page: String(currentPage - 1) });
+      }
+  };
 
   return (
     <ProtectedOverlay>
-          {/* 🔥 SHOW TOUR GUIDE IF ACTIVE */}
           {showTour && <TourGuide onComplete={handleTourComplete} />}
 
-          {/* 🔥 WRAPPED NAVBAR FOR TOUR ID - FIXED POSITION ADDED HERE */}
           <div id="tour-navbar" className="sticky top-0 z-50">
              <Navbar />
           </div>
@@ -451,18 +455,16 @@ function XJobsContent() {
               subtitle="Find Jobs Posted Directly by the People Hiring."
               placeholder="Search 'Remote', 'Email', or 'Hiring'..."
               themeColor="#ffffff" 
-              onSearch={(val: string) => setSearchQuery(val)}
+              onSearch={handleSearch}
           />
 
-          <div className="container mx-auto px-4 pb-20 flex flex-col lg:flex-row gap-8">
+          <div className="container mx-auto px-4 pb-20 flex flex-col lg:flex-row gap-8 min-h-screen">
             
-            {/* SIDEBAR FILTERS */}
-            {/* 🔥 ADDED DESKTOP ID */}
             <aside id="tour-filters-desktop" className="w-full lg:w-72 shrink-0 hidden lg:block">
               <div className="bg-white dark:bg-[#112240] rounded-xl border border-gray-200 dark:border-white/5 shadow-sm sticky top-24 overflow-hidden">
                   <div className="p-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center bg-gray-50 dark:bg-white/5">
                       <h3 className="font-bold text-base flex items-center gap-2"><Filter size={16} /> Filters</h3>
-                      <span className="text-xs text-blue-600 cursor-pointer hover:underline" onClick={() => { setActiveMainFilter("job"); setActiveSubFilter("all"); setSearchQuery(""); }}>Reset</span>
+                      <span className="text-xs text-blue-600 cursor-pointer hover:underline" onClick={() => { setActiveMainFilter("job"); setActiveSubFilter("all"); setSearchQuery(""); updateUrl({ main: 'job', sub: 'all', search: '', page: '1' }); }}>Reset</span>
                   </div>
                   <div className="p-4 space-y-2">
                     {MAIN_FILTERS.map((main) => {
@@ -489,7 +491,7 @@ function XJobsContent() {
                                                 {SUB_CATEGORIES.map((sub) => (
                                                     <button
                                                         key={sub.value}
-                                                        onClick={() => setActiveSubFilter(sub.value)}
+                                                        onClick={() => handleSubFilterClick(sub.value)}
                                                         className={`w-full text-left px-3 py-1.5 text-xs rounded-md transition-all ${activeSubFilter === sub.value ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}
                                                     >
                                                         {sub.name}
@@ -507,7 +509,6 @@ function XJobsContent() {
             </aside>
 
             <main id="tour-feed" className="flex-1">
-               {/* 🔥 ADDED MOBILE ID */}
                <button 
                   id="tour-filters-mobile"
                   onClick={() => setIsFilterOpen(true)}
@@ -517,6 +518,7 @@ function XJobsContent() {
                   {activeMainFilter.toUpperCase()} {activeSubFilter !== 'all' && `> ${activeSubFilter}`}
                </button>
 
+               {/* 🔥 REF ASSIGNED HERE */}
                <div ref={jobsHeadingRef} className="flex items-center justify-between mb-6 pt-2">
                   <h1 className="text-2xl font-bold flex items-center gap-2 uppercase tracking-tight">
                     <XLogo className="w-6 h-6 text-black dark:text-white" /> 
@@ -529,25 +531,21 @@ function XJobsContent() {
 
                {loading ? (
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                   {[1,2,3,4,5,6].map(i => <div key={i} className="h-64 bg-gray-200 dark:bg-[#112240] rounded-xl animate-pulse"></div>)}
+                   {[1,2,3,4,5,6,7,8,9].map(i => <div key={i} className="h-64 bg-gray-200 dark:bg-[#112240] rounded-xl animate-pulse"></div>)}
                  </div>
                ) : (
                  <>
                    {filteredJobs.length === 0 ? (
                        <div className="text-center py-20">
                            <p className="text-slate-500 text-lg">No jobs found matching your filters.</p>
-                           <button onClick={() => {setSearchQuery(""); setActiveSubFilter("all");}} className="mt-4 text-blue-600 font-bold hover:underline">Clear Filters</button>
+                           <button onClick={() => {setSearchQuery(""); setActiveSubFilter("all"); updateUrl({ search: '', sub: 'all' }); }} className="mt-4 text-blue-600 font-bold hover:underline">Clear Filters</button>
                        </div>
                    ) : (
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
                       {currentJobs.map((job, index) => {
                           const isActive = activeId === job.job_id;
                           const isExpanded = expandedId === job.job_id;
-                          
-                          // 🔥 SPOTLIGHT CHECK
                           const isSpotlight = !!job.isSpotlight;
-
-                          // 🔥 TOUR TARGET ID
                           const tourId = index === 0 ? 'tour-feed-start' : (isSpotlight ? 'tour-spotlight' : undefined);
 
                           return (
@@ -555,6 +553,8 @@ function XJobsContent() {
                               key={job.job_id} 
                               id={tourId}
                               layout={!isMobile} 
+                              
+                              style={{ WebkitTransform: "translateZ(0)" }}
                               
                               whileHover={!isMobile ? { 
                                   scale: 1.02, 
@@ -566,8 +566,11 @@ function XJobsContent() {
                               
                               whileTap={{ scale: 0.98 }}
                               
-                              // 🔥 TRIGGER VIEW COUNT
-                              onClick={() => handleJobClick(job.job_id)}
+                              onClick={() => {
+                                sessionStorage.setItem('instant_job_data', JSON.stringify(job));
+                                handleJobClick(job.job_id);
+                                router.push(`/x-jobs/${job.job_id}`);
+                              }}
                               
                               animate={isActive ? { 
                                   borderColor: isSpotlight ? "#10B981" : "#0a66c2", 
@@ -639,15 +642,17 @@ function XJobsContent() {
                                     <p className="text-[10px] text-gray-400 font-bold uppercase">Source</p>
                                     <p className="text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1">Verified Community</p>
                                   </div>
-                                  <Link href={`/x-jobs/${job.job_id}`}>
-                                    <button 
-                                        // 🔥 TRIGGER CLICK COUNT
-                                        onClick={(e) => handleApplyClick(e, job.job_id, job.apply_link)}
-                                        className={`${isSpotlight ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-[#0A192F] dark:bg-white text-white dark:text-[#0A192F]'} px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1 shadow-sm`}
-                                    >
+                                  <button 
+                                      onClick={(e) => {
+                                          e.stopPropagation(); 
+                                          handleApplyClick(e, job.job_id, job.apply_link);
+                                          sessionStorage.setItem('instant_job_data', JSON.stringify(job));
+                                          router.push(`/x-jobs/${job.job_id}`);
+                                      }}
+                                      className={`${isSpotlight ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-[#0A192F] dark:bg-white text-white dark:text-[#0A192F]'} px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1 shadow-sm`}
+                                  >
                                       Apply Direct <ArrowRight size={12} />
-                                    </button>
-                                  </Link>
+                                  </button>
                               </div>
                             </motion.div>
                           );
@@ -701,7 +706,7 @@ function XJobsContent() {
                                                 {SUB_CATEGORIES.map((sub) => (
                                                     <button
                                                         key={sub.value}
-                                                        onClick={() => { setActiveSubFilter(sub.value); setIsFilterOpen(false); }}
+                                                        onClick={() => { handleSubFilterClick(sub.value); setIsFilterOpen(false); }}
                                                         className={`block w-full text-left py-2 px-3 rounded-lg text-sm ${activeSubFilter === sub.value ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}
                                                     >
                                                         {sub.name}
@@ -723,7 +728,6 @@ function XJobsContent() {
   );
 }
 
-// 🔥 FIX: REMOVED DUPLICATE NAVBAR FROM HERE
 export default function XJobsPage() {
   return (
     <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0A192F] text-slate-900 dark:text-white font-sans relative">

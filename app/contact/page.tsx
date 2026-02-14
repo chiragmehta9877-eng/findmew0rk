@@ -59,14 +59,18 @@ export default function ContactPage() {
         {/* HEADER SECTION (First to Pop) */}
         <div className="bg-white dark:bg-[#112240] border-b border-gray-200 dark:border-white/5 py-12 md:py-20 animate-soothe">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <div className="inline-flex items-center justify-center p-2 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 rounded-full mb-4 px-4 text-xs font-bold uppercase tracking-wider border border-teal-100 dark:border-teal-800/50">
+                <div className="inline-flex items-center justify-center p-2 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 rounded-full mb-6 px-4 text-xs font-bold uppercase tracking-wider border border-teal-100 dark:border-teal-800/50">
                     We'd love to hear from you
                 </div>
-                <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
-                    Get in <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-500 dark:from-teal-400 dark:to-cyan-300">Touch</span>
+                
+                {/* UPDATED HEADING: Adjusted sizes and added max-w-4xl mx-auto for perfect wrapping */}
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-6 leading-tight max-w-4xl mx-auto">
+                    Questions, Feedback, or a Hiring Post We Should <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-500 dark:from-teal-400 dark:to-cyan-300">Track?</span>
                 </h1>
+                
+                {/* UPDATED PARAGRAPH */}
                 <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                    Have a project in mind or just want to say hi? Our team is ready to help you take the next step.
+                    Reach Out - We Read Every Message!
                 </p>
             </div>
         </div>

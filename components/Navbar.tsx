@@ -107,16 +107,19 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* DESKTOP LINKS */}
-          <div className="hidden md:flex items-center gap-6 lg:gap-8">
-            <Link href="/" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Home</Link>
+        {/* DESKTOP LINKS - CENTER LOCKED */}
+          <div className="hidden md:flex items-center gap-6 lg:gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <Link href="/" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+              Home
+            </Link>
             <Link href="/x-jobs" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1.5">
                 <XLogo className="w-4 h-4" /> Feeds
             </Link>
-            <Link href="/contact" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors flex items-center gap-1.5"><MessageSquare size={16} /> Contact Us</Link>
-            <Link href="/about" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors flex items-center gap-1.5"><Info size={16} /> About Us</Link>
+            <Link href="/contact" className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors flex items-center gap-1.5">
+              <MessageSquare size={16} /> Contact Us
+            </Link>
           </div>
-
+          
           {/* RIGHT SIDE */}
           <div className="hidden md:flex items-center gap-4">
             <Link 

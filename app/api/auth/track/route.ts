@@ -4,7 +4,8 @@ import User from "@/models/User";
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await req.json();
+    // 🔥 UPDATE: Frontend se 'cookieConsent' ka status bhi receive karo
+    const { userId, cookieConsent } = await req.json();
     
     if (!userId) {
         return NextResponse.json({ success: false, message: "No User ID" });
@@ -12,21 +13,40 @@ export async function POST(req: Request) {
 
     await connectToDB();
 
+    // ==============================================================
+    // 🛑 PRIVACY CHECK: Agar user ne Reject All kiya hai
+    // ==============================================================
+    if (cookieConsent === false || cookieConsent === "false") {
+        console.log("🛑 Privacy Active: User rejected cookies. Skipping IP & Location fetch.");
+        
+        // Sirf lastLogin update karo, IP aur Location track mat karo
+        await User.findByIdAndUpdate(userId, {
+            $set: { lastLogin: new Date() }
+        });
+
+        return NextResponse.json({ 
+            success: true, 
+            message: "Tracking skipped due to privacy choices.",
+            location: null,
+            ip: null
+        });
+    }
+
+    // ==============================================================
+    // ✅ TRACKING LOGIC: Agar user ne Accept kiya hai (Tabhi chalega)
+    // ==============================================================
+
     // 1. Asli IP Address Nikalo
     let ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
     
-    // Agar comma separated IPs hain (kabhi kabhi proxy se aati hain), to pehli wali uthao
     if (ip.includes(",")) {
         ip = ip.split(",")[0].trim();
     }
 
-    // 🔥 SMART LOGIC:
-    // Sirf agar hum DEVELOPMENT mode me hain (Localhost), tabhi Fake IP use karo.
-    // Production me ye code skip ho jayega aur Real IP use hogi.
     if (process.env.NODE_ENV === "development") {
         if (ip === "::1" || ip === "127.0.0.1" || ip.includes("::ffff:")) {
             console.log("🛠️ Dev Mode: Using Mock Indian IP");
-            ip = "110.224.1.1"; // Airtel Delhi IP (Sirf testing ke liye)
+            ip = "110.224.1.1"; 
         }
     }
 
@@ -42,13 +62,11 @@ export async function POST(req: Request) {
         console.error("GeoIP Error:", e);
     }
 
-    // 3. User Update
-    // 🔥 UPDATE: Ab hum 'detectedLocation' field me save karenge
-    // Taaki user ka manually enter kiya hua 'location' overwrite na ho
+    // 3. User Update (IP + Location + Date)
     await User.findByIdAndUpdate(userId, {
         $set: {
             ip: ip,
-            detectedLocation: location, // 🔥 CHANGED FROM 'location' TO 'detectedLocation'
+            detectedLocation: location, 
             lastLogin: new Date()
         }
     });

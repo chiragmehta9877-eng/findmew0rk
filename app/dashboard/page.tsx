@@ -243,7 +243,7 @@ export default function DashboardPage() {
                                  <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Saved</span>
                              </div>
                              <div className="text-center border-l border-gray-200 dark:border-white/10">
-                                 <span className="block text-2xl font-extrabold text-purple-600 dark:text-purple-400">Pro</span>
+                                 <span className="block text-2xl font-extrabold text-purple-600 dark:text-purple-400">Active</span>
                                  <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Status</span>
                              </div>
                         </div>

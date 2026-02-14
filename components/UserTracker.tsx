@@ -7,27 +7,42 @@ export default function UserTracker() {
   const { data: session } = useSession();
 
   useEffect(() => {
-    // Check karo session load hua ya nahi
+    // 1. Check if session and user exist
     if (session?.user) {
       // @ts-ignore
       const userId = session.user.id || session.user._id;
 
-      console.log("🔍 Tracker Trying to Track:", session.user.email); // Debug Log 1
+      // 🔥 2. Get Cookie Consent status from localStorage
+      const consent = localStorage.getItem('cookieConsent');
+      const isConsentGiven = consent === 'true'; // Agar 'true' string hai toh true, warna false
+
+      console.log("🔍 Tracker Debug:", {
+        email: session.user.email,
+        consent: isConsentGiven ? "Accepted ✅" : "Rejected 🛑"
+      });
 
       if (!userId) {
         console.error("❌ User ID missing in Session! Check NextAuth callbacks.");
         return;
       }
 
+      // 3. Send request to tracking API
       fetch('/api/auth/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ 
+          userId, 
+          cookieConsent: isConsentGiven // 🔥 Bhejna zaroori hai backend logic ke liye
+        }),
       })
       .then(res => res.json())
       .then(data => {
           if(data.success) {
-              console.log("✅ Location Tracked Successfully:", data.location);
+              if (data.location) {
+                console.log("✅ Location Tracked Successfully:", data.location);
+              } else {
+                console.log("ℹ️ Login Recorded (Tracking skipped per privacy settings)");
+              }
           } else {
               console.error("❌ Tracking API Error:", data.message);
           }

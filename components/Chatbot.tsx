@@ -11,38 +11,32 @@ const getBotResponse = (input: string): { text: string; link?: string; linkText?
 
   // 1. GREETINGS & CASUAL
   if (lowerInput.match(/\b(hi|hello|hey|greetings|sup)\b/)) {
-    return { text: "Hello! 👋 I'm FindMeWork AI. Ready to hunt some jobs? 🚀" };
+    return { text: "Hello! I'm FindMeWork AI. Ready to hunt some jobs?" };
   }
   if (lowerInput.includes("how are you") || lowerInput.includes("how r u")) {
-    return { text: "I'm just code, but I'm feeling fantastic! ⚡ Thanks for asking. How can I help your career today?" };
+    return { text: "I'm just code, but I'm feeling fantastic! Thanks for asking. How can I help your career today?" };
   }
   if (lowerInput.match(/\b(lol|lmao|haha|rofl)\b/)) {
-    return { text: "Glad I could make you smile! 😄 Job hunting is serious, but we can still have fun." };
+    return { text: "Glad I could make you smile! Job hunting is serious, but we can still have fun." };
   }
   if (lowerInput.match(/\b(bye|goodbye|cya|night|gn)\b/)) {
-    return { text: "Goodbye! 👋 Good luck with the job hunt. I'll be here if you need me again!" };
+    return { text: "Goodbye! Good luck with the job hunt. I'll be here if you need me again!" };
   }
   if (lowerInput.match(/\b(thanks|thank you|thx)\b/)) {
-    return { text: "You're very welcome! 💚 Let's land that dream job." };
+    return { text: "You're very welcome! Let's land that dream job." };
   }
 
   // 2. SITE NAVIGATION
-  if (lowerInput.includes("privacy") || lowerInput.includes("policy")) {
-    return { 
-      text: "Your data is safe with us. We don't sell your info.", 
-      link: "/privacy-policy",
-      linkText: "Read Privacy Policy 🔒"
-    };
-  }
+  
   if (lowerInput.includes("support") || lowerInput.includes("help") || lowerInput.includes("contact")) {
     return { 
       text: "Need a human? Our support team is ready to assist.", 
       link: "/contact", 
-      linkText: "Contact Support 🎧"
+      linkText: "Contact SupportS"
     };
   }
   if (lowerInput.includes("cost") || lowerInput.includes("free") || lowerInput.includes("pricing")) {
-    return { text: "FindMeWork is 100% Free for job seekers! 🎉 No hidden fees." };
+    return { text: "FindMeWork is 100% Free for job seekers! No hidden fees." };
   }
 
   // 3. JOB RELATED
@@ -51,16 +45,15 @@ const getBotResponse = (input: string): { text: string; link?: string; linkText?
   }
 
   // 4. FALLBACK
-  return { text: "I'm still learning! 🧠 Try asking 'How are you?', 'Privacy Policy', or just say 'Hi'." };
+  return { text: "I'm still learning! Try asking 'How are you?', or just say 'Hi'." };
 };
 
 // 💡 QUICK SUGGESTIONS
 const SUGGESTIONS = [
-  "Find me a job 🚀",
-  "How are you? 🤖",
-  "Is this free? 💸",
-  "Privacy Policy 🔒",
-  "Bye! 👋"
+  "Find me a job",
+  "How are you?",
+  "Is this free?",
+  "Bye!"
 ];
 
 type Message = {
@@ -75,7 +68,7 @@ export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { id: 1, text: "Hi! I'm your AI Recruiter. How can I help? 🤖", sender: 'bot' }
+    { id: 1, text: "Hi! I'm your AI Recruiter. How can I help?", sender: 'bot' }
   ]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -131,7 +124,7 @@ export default function Chatbot() {
                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-slate-900 rounded-full"></span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm">FindMeWork AI</h3>
+                  <h3 className="font-bold text-white text-sm">FindMeWork Bot</h3>
                   <p className="text-[10px] sm:text-xs text-slate-400">Online & Ready</p>
                 </div>
               </div>
@@ -224,18 +217,7 @@ export default function Chatbot() {
             <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white dark:border-[#0A192F] rounded-full animate-pulse"></span>
         )}
 
-        <AnimatePresence>
-          {isHovered && !isOpen && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="absolute right-14 sm:right-16 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap border border-gray-100 dark:border-white/10"
-            >
-               Chat with AI 🤖
-            </motion.div>
-          )}
-        </AnimatePresence>
+        
       </motion.button>
     </div>
   );

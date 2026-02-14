@@ -76,16 +76,16 @@ export default function HomePage() {
             <ParticleBackground />
         </div>
 
-        {/* Glows: Hidden on Mobile */}
+        {/* Glows: Hidden on Mobile - 🔥 MAC OPTIMIZED: transform-gpu */}
         <motion.div 
           animate={{ x: [0, 50, 0], y: [0, -50, 0], opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="hidden md:block absolute top-0 right-0 w-[600px] h-[600px] bg-teal-400/20 dark:bg-teal-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none"
+          className="hidden md:block absolute top-0 right-0 w-[600px] h-[600px] bg-teal-400/20 dark:bg-teal-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none will-change-transform transform-gpu"
         />
         <motion.div 
           animate={{ x: [0, -50, 0], y: [0, 50, 0], opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="hidden md:block absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-400/20 dark:bg-blue-600/10 rounded-full blur-[120px] translate-y-1/3 -translate-x-1/3 pointer-events-none"
+          className="hidden md:block absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-400/20 dark:bg-blue-600/10 rounded-full blur-[120px] translate-y-1/3 -translate-x-1/3 pointer-events-none will-change-transform transform-gpu"
         />
         
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -105,26 +105,22 @@ export default function HomePage() {
                 Live Job Posts Detected in Real Time
               </motion.div>
               
-          <motion.h1 
-  variants={fadeInUp} 
-  className="text-4xl lg:text-6xl font-extrabold text-slate-900 dark:text-white leading-tight tracking-tight mb-6"
->
-  Connect Directly with Hiring Managers
-  
-  {/* 1. Reduced size to 'text-xl lg:text-3xl' so the main headline dominates.
-      2. Added 'pb-2' and 'leading-normal' to stop the text/gradient from getting cut off. 
-  */}
-  <span className="block mt-3 text-xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 dark:from-teal-400 dark:via-blue-400 dark:to-purple-500 animate-gradient-x pb-2 leading-normal">
-    No Portals. No Easy Apply. No Middlemen.
-  </span>
-</motion.h1>
+              <motion.h1 
+                variants={fadeInUp} 
+                className="text-4xl lg:text-6xl font-extrabold text-slate-900 dark:text-white leading-tight tracking-tight mb-6"
+              >
+                Connect Directly with Hiring Managers
+                <span className="block mt-3 text-xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 dark:from-teal-400 dark:via-blue-400 dark:to-purple-500 animate-gradient-x pb-2 leading-normal">
+                  No Portals. No Easy Apply. No Middlemen.
+                </span>
+              </motion.h1>
               
               <motion.p 
-  variants={fadeInUp} 
-  className="text-lg md:text-xl text-slate-700 dark:text-gray-300 max-w-lg mt-0 mb-6 leading-snug"
->
-  FindMeWork scans Twitter (X) for real job posts shared by founders, recruiters, and hiring managers, then lets you submit your profile straight to them.
-</motion.p>
+                variants={fadeInUp} 
+                className="text-lg md:text-xl text-slate-700 dark:text-gray-300 max-w-lg mt-0 mb-6 leading-snug"
+              >
+                FindMeWork scans Twitter (X) for real job posts shared by founders, recruiters, and hiring managers, then lets you submit your profile straight to them.
+              </motion.p>
 
               <motion.div variants={fadeInUp} className="w-full">
                 <HeroSearch onSearch={handleHomeSearch} />
@@ -135,10 +131,10 @@ export default function HomePage() {
                   <Briefcase size={20} /> Find Work Now
                 </Link>
                 
-                {/* 🔥 UPDATED BUTTON: Change Logic based on isSubscribed */}
+                {/* 🔥 UPDATED BUTTON */}
                 <button 
                   onClick={() => !isSubscribed && setIsAlertOpen(true)}
-                  disabled={isSubscribed} // Click disable kar diya agar subscribed hai
+                  disabled={isSubscribed} 
                   className={`w-full sm:w-auto px-8 py-4 border font-bold rounded-xl transition-all flex items-center justify-center gap-2 group shadow-sm dark:shadow-none
                     ${isSubscribed 
                       ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400 cursor-default" 
@@ -159,15 +155,12 @@ export default function HomePage() {
                   )}
                 </button>
 
-                {/* 🔥 UPDATED ALERT MODAL PROP */}
                 <AlertModal 
                   isOpen={isAlertOpen} 
                   onClose={() => setIsAlertOpen(false)} 
-                  onSuccess={() => setIsSubscribed(true)} // ✅ Ye alert modal ko batayega ki success ho gaya
+                  onSuccess={() => setIsSubscribed(true)} 
                 />
               </motion.div>
-
-            
             </motion.div>
 
             {/* Right: Hologram (PC Only) */}
@@ -198,12 +191,11 @@ export default function HomePage() {
             className="text-center max-w-3xl mx-auto mb-16"
           >
             <h2 className="text-sm font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest mb-2">The Intelligence Engine</h2>
-            <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">How we find jobs before they hit job boards!
-</h3>
+            <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">How we find jobs before they hit job boards!</h3>
             <p className="text-slate-600 dark:text-gray-400">
-  Traditional job boards are overcrowded. <br />
-  FindMeWork tracks where hiring actually happens, in public posts by founders and hiring managers.
-</p>
+              Traditional job boards are overcrowded. <br />
+              FindMeWork tracks where hiring actually happens, in public posts by founders and hiring managers.
+            </p>
           </motion.div>
 
           <motion.div 
@@ -222,7 +214,6 @@ export default function HomePage() {
               <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Global Scan</h4>
               <p className="text-sm text-slate-600 dark:text-gray-400 leading-relaxed">
                 FindMeWork monitor public hiring posts across Twitter (X) in real time.
-
               </p>
             </motion.div>
 
@@ -234,7 +225,7 @@ export default function HomePage() {
               </div>
               <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-3">AI Context Extraction</h4>
               <p className="text-sm text-slate-600 dark:text-gray-400 leading-relaxed">
-Most hiring posts are unstructured and easy to miss. FindMeWork's Al automatically extracts the role, required skills, location, salary (when mentioned), and contact details.
+                Most hiring posts are unstructured and easy to miss. FindMeWork's Al automatically extracts the role, required skills, location, salary (when mentioned), and contact details.
               </p>
             </motion.div>
 
@@ -278,7 +269,7 @@ Most hiring posts are unstructured and easy to miss. FindMeWork's Al automatical
             >
               <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-8 leading-tight">
                 Stop Applying to <br/> 
-                <span className="text-red-500 decoration-red-500/30 underline decoration-wavy underline-offset-4">Ghost Jobs.</span>
+                <span className="text-red-500 decoration-red-500/30 ">Ghost Jobs</span>
               </h2>
               <p className="text-lg text-slate-600 dark:text-gray-300 mb-10 max-w-lg leading-relaxed">
                 FindMeWork shows only jobs that are real, and posted by the people actually hiring.
@@ -314,35 +305,31 @@ Most hiring posts are unstructured and easy to miss. FindMeWork's Al automatical
 
             {/* Right Column: Cards */}
             <motion.div 
-  initial={{ opacity: 0, x: 20 }}
-  whileInView={{ opacity: 1, x: 0 }}
-  viewport={{ once: true }}
-  className="lg:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-6"
->
-  {/* Zero Spam */}
-  <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center">
-     <Shield size={56} className="text-teal-500 mb-4" strokeWidth={2} />
-     <h4 className="font-bold text-2xl dark:text-white">Zero Spam</h4>
-  </div>
-  
-  {/* Smart Sorting */}
-  <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center sm:mt-12">
-     <Layers size={56} className="text-blue-500 mb-4" strokeWidth={2} />
-     <h4 className="font-bold text-2xl dark:text-white">Smart Sorting</h4>
-  </div>
-  
-  {/* Lightning Fast */}
-  <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center">
-     <Zap size={56} className="text-yellow-500 mb-4" strokeWidth={2} />
-     <h4 className="font-bold text-2xl dark:text-white">Lightning Fast</h4>
-  </div>
-  
-  {/* Contract Work */}
-  <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center sm:mt-12">
-     <Briefcase size={56} className="text-purple-500 mb-4" strokeWidth={2} />
-     <h4 className="font-bold text-2xl dark:text-white">Contract Work</h4>
-  </div>
-</motion.div>
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="lg:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-6"
+            >
+              <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center">
+                 <Shield size={56} className="text-teal-500 mb-4" strokeWidth={2} />
+                 <h4 className="font-bold text-2xl dark:text-white">Zero Spam</h4>
+              </div>
+              
+              <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center sm:mt-12">
+                 <Layers size={56} className="text-blue-500 mb-4" strokeWidth={2} />
+                 <h4 className="font-bold text-2xl dark:text-white">Smart Sorting</h4>
+              </div>
+              
+              <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center">
+                 <Zap size={56} className="text-yellow-500 mb-4" strokeWidth={2} />
+                 <h4 className="font-bold text-2xl dark:text-white">Lightning Fast</h4>
+              </div>
+              
+              <div className="p-8 bg-white dark:bg-[#112240] rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center justify-center sm:mt-12">
+                 <Briefcase size={56} className="text-purple-500 mb-4" strokeWidth={2} />
+                 <h4 className="font-bold text-2xl dark:text-white">Contract Work</h4>
+              </div>
+            </motion.div>
 
           </div>
         </div>
@@ -357,10 +344,11 @@ Most hiring posts are unstructured and easy to miss. FindMeWork's Al automatical
       <section className="py-20 bg-teal-600 dark:bg-teal-900/30 relative overflow-hidden">
          {/* Static BG for Mobile, Animated for Desktop */}
          <div className="absolute inset-0 bg-teal-600 dark:bg-teal-900/30 backdrop-blur-3xl opacity-50 md:hidden"></div>
+         {/* 🔥 MAC OPTIMIZED: transform-gpu */}
          <motion.div 
            animate={{ scale: [1, 1.2, 1], rotate: [0, 5, 0] }}
            transition={{ duration: 20, repeat: Infinity }}
-           className="hidden md:block absolute inset-0 bg-teal-600 dark:bg-teal-900/30 backdrop-blur-3xl opacity-50"
+           className="hidden md:block absolute inset-0 bg-teal-600 dark:bg-teal-900/30 backdrop-blur-3xl opacity-50 will-change-transform transform-gpu"
          />
          <div className="container mx-auto px-4 relative z-10 text-center">
             <motion.h2 
@@ -392,7 +380,7 @@ Most hiring posts are unstructured and easy to miss. FindMeWork's Al automatical
 }
 
 // ----------------------------------------------------
-// 🔥 SEXY GLOWING PARTICLE NETWORK (UPGRADED)
+// 🔥 SEXY GLOWING PARTICLE NETWORK (MAC OPTIMIZED)
 // ----------------------------------------------------
 function ParticleBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -424,11 +412,9 @@ function ParticleBackground() {
       constructor() {
         this.x = Math.random() * canvas!.width;
         this.y = Math.random() * canvas!.height;
-        // Slower, smoother movement
         this.vx = (Math.random() - 0.5) * 0.3; 
         this.vy = (Math.random() - 0.5) * 0.3;
         this.size = Math.random() * 2.5 + 0.5;
-        // Cyberpunk Teal/Blue mix
         const colors = ['#2DD4BF', '#0EA5E9', '#6366F1']; 
         this.baseColor = colors[Math.floor(Math.random() * colors.length)];
       }
@@ -437,22 +423,24 @@ function ParticleBackground() {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Bounce off edges
         if (this.x < 0 || this.x > canvas!.width) this.vx *= -1;
         if (this.y < 0 || this.y > canvas!.height) this.vy *= -1;
       }
 
       draw() {
         if(!ctx) return;
+        // ✅ APPLE OPTIMIZED FAKE GLOW (No shadowBlur!)
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
+        ctx.fillStyle = this.baseColor;
+        ctx.globalAlpha = 0.15; 
+        ctx.fill();
+
+        // Core Solid Particle
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = this.baseColor;
-        // 🔥 GLOW EFFECT
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = this.baseColor;
+        ctx.globalAlpha = 1.0; 
         ctx.fill();
-        // Reset shadow for performance
-        ctx.shadowBlur = 0;
       }
     }
 
@@ -480,7 +468,6 @@ function ParticleBackground() {
         p.update();
         p.draw();
         
-        // 1. Draw connections between particles
         for (let j = index + 1; j < particles.length; j++) {
           const p2 = particles[j];
           const dx = p.x - p2.x;
@@ -489,7 +476,8 @@ function ParticleBackground() {
 
           if (distance < 120) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(45, 212, 191, ${0.15 - distance / 800})`; // Teal tint
+            ctx.strokeStyle = p.baseColor; // Safari optimized styling
+            ctx.globalAlpha = Math.max(0, 0.15 - distance / 800); // Prevent negative alpha bugs
             ctx.lineWidth = 0.5;
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
@@ -497,19 +485,20 @@ function ParticleBackground() {
           }
         }
 
-        // 2. Draw connections to mouse
         const dxMouse = p.x - mouseRef.current.x;
         const dyMouse = p.y - mouseRef.current.y;
         const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
 
         if (distMouse < 200) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(14, 165, 233, ${0.4 - distMouse / 500})`; // Blue highlight
+            ctx.strokeStyle = "#0EA5E9"; // Blue highlight
+            ctx.globalAlpha = Math.max(0, 0.4 - distMouse / 500);
             ctx.lineWidth = 0.8;
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(mouseRef.current.x, mouseRef.current.y);
             ctx.stroke();
         }
+        ctx.globalAlpha = 1.0; // Reset alpha
       });
 
       animationFrameId = requestAnimationFrame(animate);
@@ -528,5 +517,5 @@ function ParticleBackground() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="w-full h-full opacity-80" />;
+  return <canvas ref={canvasRef} className="w-full h-full opacity-60" />;
 }
