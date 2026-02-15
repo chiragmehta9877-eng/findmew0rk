@@ -41,7 +41,14 @@ export const metadata: Metadata = {
     'startup jobs'
   ],
 
-  // 🔥 OPEN GRAPH (For WhatsApp, LinkedIn, Facebook sharing)
+  // 🔥 1. SITE-WIDE LOGO (Browser tab aur Google search me dikhne ke liye)
+  icons: {
+    icon: '/icon.png', 
+    shortcut: '/favicon.ico',
+    apple: '/icon.png',
+  },
+
+  // 🔥 2. SITE-WIDE BANNER (WhatsApp, LinkedIn, Facebook sharing)
   openGraph: {
     title: 'FindMeWork | Direct Jobs from Hiring Managers',
     description: 'Find jobs hidden in the noise. Connect directly with founders and recruiters.',
@@ -49,7 +56,7 @@ export const metadata: Metadata = {
     siteName: 'FindMeWork',
     images: [
       {
-        url: '/og-image.png', // 🔥 Apne 'public' folder me og-image.png zaroor daalna (1200x630 px)
+        url: 'https://findmew0rk.com/og-image.png', // 🔥 ABSOLUTE URL: WhatsApp ko yahi chahiye!
         width: 1200,
         height: 630,
         alt: 'FindMeWork Platform Preview',
@@ -64,10 +71,10 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'FindMeWork - Find Hidden Jobs',
     description: 'Get hired directly by founders. No portals, no middlemen.',
-    images: ['/og-image.png'], // 🔥 Same image for Twitter
+    images: ['https://findmew0rk.com/og-image.png'], // 🔥 ABSOLUTE URL HERE TOO
   },
 
-  // 🔥 GOOGLE ROBOTS (Tells Google to aggressively index your site)
+  // 🔥 GOOGLE ROBOTS
   robots: {
     index: true,
     follow: true,

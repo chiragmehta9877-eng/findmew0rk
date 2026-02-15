@@ -7,7 +7,7 @@ type Props = {
   params: Promise<{ id: string }> | any; 
 }
 
-// 1. 🚀 DYNAMIC SEO METADATA
+// 1. 🚀 DYNAMIC SEO METADATA (WITH WHATSAPP FIX)
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const params = await props.params; 
   const id = params.id;
@@ -24,6 +24,12 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     const company = String(rawUsername).startsWith('@') ? String(rawUsername) : `@${rawUsername}`;
     const cleanDesc = job.text ? job.text.substring(0, 150).replace(/\n/g, ' ') + '...' : `Apply for the ${job.job_title} role at ${company}.`;
 
+    // 🔥 FIX: WhatsApp & LinkedIn need ABSOLUTE URLs
+    const defaultBanner = 'https://findmew0rk.com/og-image.png';
+    const employerLogo = (job.employer_logo && job.employer_logo.startsWith('http')) 
+                          ? job.employer_logo 
+                          : defaultBanner;
+
     return {
       title: `${job.job_title} at ${company} | FindMeWork`,
       description: cleanDesc,
@@ -32,13 +38,21 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
         title: `Hiring: ${job.job_title} at ${company}`,
         description: cleanDesc,
         type: 'website',
-        images: [job.employer_logo || '/og-image.png'], 
+        url: `https://findmew0rk.com/x-jobs/${id}`,
+        images: [
+          {
+            url: employerLogo, // 🔥 Fixed Absolute URL
+            width: 1200,
+            height: 630,
+            alt: `${job.job_title} Job on FindMeWork`,
+          }
+        ], 
       },
       twitter: {
         card: 'summary_large_image',
         title: `${job.job_title} at ${company}`,
         description: cleanDesc,
-        images: [job.employer_logo || '/og-image.png'],
+        images: [employerLogo], // 🔥 Fixed Absolute URL
       }
     }
   } catch (error) {
