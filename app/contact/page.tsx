@@ -92,7 +92,7 @@ export default function ContactPage() {
                         <ContactCard 
                             icon={<Mail className="text-teal-600 dark:text-teal-400"/>}
                             title="Email Support"
-                            value="support@findmework.com"
+                            value="support@findmew0rk.com"
                             desc="We reply within 2 hours"
                         />
                         <ContactCard 

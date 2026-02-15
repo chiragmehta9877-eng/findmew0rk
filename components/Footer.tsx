@@ -63,7 +63,7 @@ export default function Footer() {
                 <XLogo className="w-4 h-4" />
               </a>
 
-              <SocialLink href="mailto:support@findmework.com" icon={<Mail size={18} />} label="Email" />
+              <SocialLink href="mailto:support@findmew0rk.com" icon={<Mail size={18} />} label="Email" />
             </div>
           </div>
 
