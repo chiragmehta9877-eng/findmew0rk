@@ -7,7 +7,7 @@ type Props = {
   params: Promise<{ id: string }> | any; 
 }
 
-// 1. 🚀 DYNAMIC SEO METADATA (WITH WHATSAPP FIX)
+// 1. 🚀 DYNAMIC SEO METADATA
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const params = await props.params; 
   const id = params.id;
@@ -24,11 +24,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     const company = String(rawUsername).startsWith('@') ? String(rawUsername) : `@${rawUsername}`;
     const cleanDesc = job.text ? job.text.substring(0, 150).replace(/\n/g, ' ') + '...' : `Apply for the ${job.job_title} role at ${company}.`;
 
-    // 🔥 FIX: WhatsApp & LinkedIn need ABSOLUTE URLs
+    // 🔥 FIX: Ab hum Twitter ke logo ka risk nahi lenge. 
+    // Hamesha apna 100% working banner use karenge!
     const defaultBanner = 'https://findmew0rk.com/og-image.png';
-    const employerLogo = (job.employer_logo && job.employer_logo.startsWith('http')) 
-                          ? job.employer_logo 
-                          : defaultBanner;
 
     return {
       title: `${job.job_title} at ${company} | FindMeWork`,
@@ -41,10 +39,10 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
         url: `https://findmew0rk.com/x-jobs/${id}`,
         images: [
           {
-            url: employerLogo, // 🔥 Fixed Absolute URL
+            url: defaultBanner, // 🔥 Hamesha apka designer banner aayega!
             width: 1200,
             height: 630,
-            alt: `${job.job_title} Job on FindMeWork`,
+            alt: `FindMeWork Job Search`,
           }
         ], 
       },
@@ -52,7 +50,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
         card: 'summary_large_image',
         title: `${job.job_title} at ${company}`,
         description: cleanDesc,
-        images: [employerLogo], // 🔥 Fixed Absolute URL
+        images: [defaultBanner], // 🔥 Yahan bhi apka banner
       }
     }
   } catch (error) {
