@@ -96,6 +96,12 @@ export default function CookieConsent() {
             Accept All
           </button>
         </div>
+        {/* Link */}
+        <div className="mt-5 text-center">
+            <a href="/privacy-policy" className="text-xs text-slate-500 font-medium hover:text-purple-600 transition-colors border-b border-slate-200 hover:border-purple-300 pb-0.5">
+              Read our Privacy Policy
+            </a>
+        </div>
 
       </div>
     </div>

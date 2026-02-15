@@ -68,6 +68,18 @@ export default function LoginPage() {
             <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">Secure Access</span>
             <div className="h-px bg-gray-200 dark:bg-white/10 flex-1"></div>
           </div>
+
+          {/* 🔥 PRIVACY POLICY LINK ADDED HERE */}
+          <p className="text-center text-xs text-slate-500 dark:text-gray-400 mt-6">
+            By continuing, you agree to our{' '}
+            <Link 
+              href="/privacy-policy" 
+              className="font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 hover:underline transition-colors"
+            >
+              Privacy Policy
+            </Link>.
+          </p>
+
         </div>
       </motion.div>
     </div>

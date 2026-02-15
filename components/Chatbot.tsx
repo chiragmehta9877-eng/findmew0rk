@@ -27,6 +27,14 @@ const getBotResponse = (input: string): { text: string; link?: string; linkText?
   }
 
   // 2. SITE NAVIGATION
+if (lowerInput.includes("privacy") || lowerInput.includes("policy")) {
+    return { 
+      text: "Your data is safe with us. We don't sell your info.", 
+      link: "/privacy-policy",
+      linkText: "Read Privacy Policy"
+    };
+  }
+  
   
   if (lowerInput.includes("support") || lowerInput.includes("help") || lowerInput.includes("contact")) {
     return { 
@@ -53,6 +61,7 @@ const SUGGESTIONS = [
   "Find me a job",
   "How are you?",
   "Is this free?",
+  "Privacy Policy",
   "Bye!"
 ];
 

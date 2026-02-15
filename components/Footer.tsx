@@ -71,8 +71,9 @@ export default function Footer() {
           <div>
             <h3 className="text-slate-900 dark:text-white font-bold mb-4">Account</h3>
             <ul className="space-y-3 text-sm text-slate-500 dark:text-slate-400">
-              <li><FooterLink href="/dashboard">Dashboard</FooterLink></li>
               
+              <li><FooterLink href="/dashboard">Dashboard</FooterLink></li>
+              <li><FooterLink href="/privacy-policy">Privacy Policy</FooterLink></li>
             </ul>
           </div>
 

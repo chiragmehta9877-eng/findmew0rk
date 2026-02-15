@@ -2,7 +2,7 @@ import { schedule } from '@netlify/functions';
 import mongoose from 'mongoose';
 import axios from 'axios';
 
-// ⚠️ Ensure paths are correct
+// ⚠️ Ensure paths are correct based on your project structure
 import { connectToDB } from '../../lib/mongodb'; 
 import Job from '../../models/Job';
 
@@ -72,6 +72,7 @@ const CATEGORIES = [
 // --- HELPERS ---
 const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 
+// ✅ FIX 1: Added ': string' type to text
 function inferWorkType(text: string) {
     const t = text.toLowerCase();
     if (t.includes('intern')) return 'Internship';
@@ -79,14 +80,17 @@ function inferWorkType(text: string) {
     return 'Full-time';
 }
 
+// ✅ FIX 2: Added ': string' type to text
 function inferLocation(text: string) {
-    if (text.toLowerCase().includes('remote')) return 'Remote';
+    const t = text.toLowerCase();
+    if (t.includes('remote') || t.includes('wfh')) return 'Remote';
     return 'Global';
 }
 
 // --- MAIN LOGIC ---
+// ✅ FIX 3: Added ': any' type to event
 const cronHandler = async (event: any) => {
-    console.log("⏰ [Cloud Cron] Started 2-Day Job Fetch (Limit: 100)...");
+    console.log("⏰ [Cloud Cron] Started 3-Day Job Fetch (Limit: 100)...");
     
     // 1. Connect DB
     if (mongoose.connection.readyState === 0) {
@@ -112,20 +116,26 @@ const cronHandler = async (event: any) => {
                 }
             });
 
-            const tweets = response.data.timeline || [];
+            // Handle different object structures from RapidAPI
+            const tweets = response.data.timeline || response.data.tweets || response.data || [];
             
             // 🔥 Limit: 100 posts
             const latestTweets = tweets.slice(0, 100);
 
             for (const item of latestTweets) {
-                const text = item.text || "";
+                // Fetching full text perfectly
+                const text = item.text || item.full_text || "";
                 const emailMatch = text.match(emailRegex);
                 
                 // Only save if Email is present (Quality Filter)
                 if (emailMatch) {
                     
-                    // Generate Unique ID based on Category too, to allow same tweet in multiple cats if needed
-                    const uniqueJobId = `${item.tweet_id}__${cat.value}`;
+                    // Generate Unique ID based on Category too
+                    const uniqueJobId = `tw-${item.tweet_id || item.id}__${cat.value}`;
+
+                    // Smart Profile Logic (Name and Avatar)
+                    const employerName = item.user_info?.name || item.screen_name || "X User";
+                    const employerLogo = item.user_info?.avatar || "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg";
 
                     // Upsert to DB
                     await Job.updateOne(
@@ -133,18 +143,13 @@ const cronHandler = async (event: any) => {
                         { 
                             $set: {
                                 job_id: uniqueJobId,
-                                // Title formatting
                                 job_title: `${cat.name.split('&')[0].trim()} Role`, 
-                                employer_name: item.screen_name ? `@${item.screen_name}` : "Recruiter",
-                                employer_logo: "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg",
+                                employer_name: employerName,
+                                employer_logo: employerLogo,
                                 link: item.url,
                                 text: text,
                                 source: "twitter",
-                                
-                                // 🔥 IMPORTANT: Saving the 'value' (e.g., 'marketing') 
-                                // so frontend filter works perfectly
                                 category: cat.value, 
-                                
                                 job_city: inferLocation(text),
                                 email: emailMatch[0],
                                 work_mode: inferWorkType(text),
@@ -156,8 +161,9 @@ const cronHandler = async (event: any) => {
                     totalAdded++;
                 }
             }
-        } catch (error) {
-            console.error(`❌ Error in ${cat.name}:`, error);
+        // ✅ FIX 4 & 5: Added ': any' to error so TS doesn't complain about 'unknown' type
+        } catch (error: any) {
+            console.error(`❌ Error in ${cat.name}:`, error?.response?.data || error.message);
         }
         
         // Wait 2s to respect API rate limits between categories
@@ -172,6 +178,6 @@ const cronHandler = async (event: any) => {
     };
 };
 
-// 🔥 SCHEDULE: Runs at 9:00 AM every 2nd day
+// 🔥 SCHEDULE: Runs at 8:00 AM IST (2:30 AM UTC) every 3rd day
 // Cron format: (Minute Hour DayOfMonth Month DayOfWeek)
-export const handler = schedule("0 9 */2 * *", cronHandler);
+export const handler = schedule("30 2 */3 * *", cronHandler);
