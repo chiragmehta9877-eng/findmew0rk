@@ -196,7 +196,7 @@ export default function Navbar() {
             <Link href="/" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-teal-600">Home</Link>
             <Link href="/x-jobs" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"><XLogo className="w-5 h-5" /> Feeds</Link>
             <Link href="/contact" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"><MessageSquare size={18} /> Contact Us</Link>
-            <Link href="/about" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"><Info size={18} /> About Us</Link>
+            
             <Link href="/support" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/10 hover:bg-yellow-100"><Coffee size={18} /> Buy me a Coffee</Link>
 
             <div className="pt-4 mt-2 border-t border-gray-100 dark:border-white/5">

@@ -6,8 +6,8 @@ import UserTracker from "@/components/UserTracker";
 import BlockedPopup from "@/components/BlockedPopup";
 import FooterWrapper from "@/components/FooterWrapper";
 import GlobalUiWrapper from "@/components/GlobalUiWrapper";
-import MaintenanceWrapper from "@/components/MaintenanceWrapper"; // 👈 YE IMPORT KARO
-import { getMaintenanceStatus } from "@/lib/getMaintenanceStatus"; // 👈 DB CHECK
+import MaintenanceWrapper from "@/components/MaintenanceWrapper";
+import { getMaintenanceStatus } from "@/lib/getMaintenanceStatus";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,9 +15,75 @@ const inter = Inter({ subsets: ["latin"] });
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+// ==========================================
+// 🚀 KILLER SEO METADATA (For Rank #1)
+// ==========================================
 export const metadata: Metadata = {
-  title: "FindMeWork",
-  description: "Find jobs hidden in the noise.",
+  // 🔥 BASE URL: Ye us warning ko hamesha ke liye khatam kar dega
+  metadataBase: new URL('https://findmew0rk.com'), 
+  
+  // 🔥 TITLE & DESCRIPTION
+  title: {
+    default: 'FindMeWork | Find Hidden Jobs Directly from Hiring Managers',
+    template: '%s | FindMeWork' // Ye sub-pages (jaise job details) ke liye kaam aayega
+  },
+  description: 'Stop applying to ghost jobs. FindMeWork (findmew0rk) scans Twitter (X) to find real, hidden job opportunities posted directly by founders and recruiters. Apply with zero middlemen.',
+  
+  // 🔥 KEYWORDS
+  keywords: [
+    'FindMeWork', 
+    'findmew0rk', 
+    'find me work', 
+    'twitter jobs', 
+    'direct hiring', 
+    'remote jobs', 
+    'hidden tech jobs',
+    'startup jobs'
+  ],
+
+  // 🔥 OPEN GRAPH (For WhatsApp, LinkedIn, Facebook sharing)
+  openGraph: {
+    title: 'FindMeWork | Direct Jobs from Hiring Managers',
+    description: 'Find jobs hidden in the noise. Connect directly with founders and recruiters.',
+    url: 'https://findmew0rk.com',
+    siteName: 'FindMeWork',
+    images: [
+      {
+        url: '/og-image.png', // 🔥 Apne 'public' folder me og-image.png zaroor daalna (1200x630 px)
+        width: 1200,
+        height: 630,
+        alt: 'FindMeWork Platform Preview',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+
+  // 🔥 TWITTER CARDS
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FindMeWork - Find Hidden Jobs',
+    description: 'Get hired directly by founders. No portals, no middlemen.',
+    images: ['/og-image.png'], // 🔥 Same image for Twitter
+  },
+
+  // 🔥 GOOGLE ROBOTS (Tells Google to aggressively index your site)
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+
+  // 🔥 CANONICAL URL
+  alternates: {
+    canonical: 'https://findmew0rk.com',
+  },
 };
 
 // ✅ ASYNC FUNCTION (Server Side Logic)
@@ -34,12 +100,7 @@ export default async function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         
-        {/* 🔥 MAINTENANCE WRAPPER (The Guard)
-            Ye pure app ko lapet lega.
-            - Agar Maintenance ON hai -> Sirf Maintenance Page dikhayega.
-            - Agar Admin hai -> Children dikhayega.
-            - Agar OFF hai -> Normal site dikhayega.
-        */}
+        {/* 🔥 MAINTENANCE WRAPPER */}
         <MaintenanceWrapper initialStatus={isMaintenance}>
             
             <AuthProvider>
@@ -52,11 +113,11 @@ export default async function RootLayout({
                     {children}
                   </div>
                   
-                  {/* Footer ab Wrapper ke andar hai, to Maintenance me nahi dikhega */}
+                  {/* Footer ab Wrapper ke andar hai */}
                   <FooterWrapper />
               </div>
               
-              {/* Global UI (Chatbot etc) bhi hide ho jayega */}
+              {/* Global UI (Chatbot etc) */}
               <GlobalUiWrapper />
 
             </AuthProvider>

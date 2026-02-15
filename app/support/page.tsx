@@ -43,13 +43,13 @@ export default function SupportPage() {
           >
             <div className="relative w-full flex justify-center">
                 
-                {/* Premium Soft Glows */}
-                <div className="absolute -top-6 -left-4 w-64 h-64 bg-teal-500/30 dark:bg-teal-600/20 rounded-full blur-3xl opacity-70 animate-blob"></div>
-                <div className="absolute -top-6 -right-4 w-64 h-64 bg-cyan-500/30 dark:bg-cyan-600/20 rounded-full blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
-                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-64 h-64 bg-amber-500/30 dark:bg-amber-500/20 rounded-full blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+                {/* 🔥 MAC OPTIMIZED: Premium Soft Glows with transform-gpu & will-change */}
+                <div className="absolute -top-6 -left-4 w-64 h-64 bg-teal-500/30 dark:bg-teal-600/20 rounded-full blur-3xl opacity-70 animate-blob transform-gpu will-change-transform"></div>
+                <div className="absolute -top-6 -right-4 w-64 h-64 bg-cyan-500/30 dark:bg-cyan-600/20 rounded-full blur-3xl opacity-70 animate-blob animation-delay-2000 transform-gpu will-change-transform"></div>
+                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-64 h-64 bg-amber-500/30 dark:bg-amber-500/20 rounded-full blur-3xl opacity-70 animate-blob animation-delay-4000 transform-gpu will-change-transform"></div>
                 
-                {/* Main Widget Wrapper */}
-                <div className="relative z-10 w-full bg-white dark:bg-slate-900/95 dark:backdrop-blur-sm border border-gray-100 dark:border-amber-500/20 rounded-2xl p-6 md:p-8 shadow-[0_0_40px_rgba(245,158,11,0.05)] dark:shadow-[0_0_50px_rgba(245,158,11,0.08)] hover:shadow-[0_0_50px_rgba(245,158,11,0.1)] dark:hover:shadow-[0_0_70px_rgba(245,158,11,0.15)] transition-all duration-500 text-center">
+                {/* 🔥 MAC OPTIMIZED: Main Widget Wrapper with transform-gpu to prevent paint thrashing */}
+                <div className="relative z-10 w-full bg-white dark:bg-slate-900/95 dark:backdrop-blur-sm border border-gray-100 dark:border-amber-500/20 rounded-2xl p-6 md:p-8 shadow-[0_0_40px_rgba(245,158,11,0.05)] dark:shadow-[0_0_50px_rgba(245,158,11,0.08)] hover:shadow-[0_0_50px_rgba(245,158,11,0.1)] dark:hover:shadow-[0_0_70px_rgba(245,158,11,0.15)] transition-all duration-500 text-center transform-gpu">
                     
                     {/* Header with Lucide Coffee Icon */}
                     <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-3 flex items-center justify-center gap-2">
@@ -111,7 +111,7 @@ export default function SupportPage() {
             className="text-center mt-10 pt-6 border-t border-slate-200 dark:border-white/10"
         >
             <p className="text-slate-500 dark:text-slate-400 text-sm flex items-center justify-center gap-2">
-                <Zap size={16} className="text-yellow-500" fill="currentColor"/> 
+               
                 If FindMeWork helped you find real opportunities help keep it running.
             </p>
         </motion.div>
