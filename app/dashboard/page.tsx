@@ -11,6 +11,7 @@ import {
   Edit3, Linkedin, Instagram, CheckCircle, Plus, X, Save, Briefcase, ExternalLink, Target, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import AuthPopup from '@/components/AuthPopup'; 
 
 // Custom X Logo
 const XLogo = ({ className }: { className?: string }) => (
@@ -44,11 +45,6 @@ export default function DashboardPage() {
   });
   
   const [completion, setCompletion] = useState(20);
-
-  // AUTH CHECK
-  useEffect(() => {
-    if (status === 'unauthenticated') router.push('/'); 
-  }, [status, router]);
 
   // FETCH DATA
   useEffect(() => {
@@ -158,8 +154,48 @@ export default function DashboardPage() {
       }
   };
 
-  if (status === 'loading') return <div className="min-h-screen bg-slate-50 dark:bg-[#0A192F] flex items-center justify-center"><Loader2 className="animate-spin text-teal-500" size={40} /></div>;
-  if (!session) return null; 
+  // 🔥 1. SKELETON LOADING STATE (Better UX than Spinner)
+  if (status === 'loading') {
+    return (
+        <div className="min-h-screen bg-slate-50 dark:bg-[#0A192F] font-sans pb-20">
+            <Navbar />
+            <div className="container mx-auto px-4 py-8 max-w-6xl animate-pulse">
+                {/* Header Skeleton */}
+                <div className="h-6 w-32 bg-gray-200 dark:bg-white/5 rounded mb-8"></div>
+                <div className="flex flex-col md:flex-row justify-between gap-4 mb-10">
+                    <div className="space-y-3">
+                        <div className="h-10 w-64 bg-gray-200 dark:bg-white/5 rounded"></div>
+                        <div className="h-4 w-48 bg-gray-200 dark:bg-white/5 rounded"></div>
+                    </div>
+                    <div className="h-10 w-40 bg-gray-200 dark:bg-white/5 rounded hidden md:block"></div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Card Skeleton */}
+                    <div className="lg:col-span-1 h-[500px] bg-white dark:bg-[#112240] rounded-3xl border border-gray-200 dark:border-white/5"></div>
+                    {/* Right Card Skeleton */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="flex justify-between">
+                            <div className="h-8 w-40 bg-gray-200 dark:bg-white/5 rounded"></div>
+                            <div className="h-8 w-20 bg-gray-200 dark:bg-white/5 rounded"></div>
+                        </div>
+                        <div className="h-32 w-full bg-white dark:bg-[#112240] rounded-2xl border border-gray-200 dark:border-white/5"></div>
+                        <div className="h-32 w-full bg-white dark:bg-[#112240] rounded-2xl border border-gray-200 dark:border-white/5"></div>
+                        <div className="h-32 w-full bg-white dark:bg-[#112240] rounded-2xl border border-gray-200 dark:border-white/5"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+  }
+
+  // 🔥 2. Unauthenticated State -> Show Popup
+  if (status === 'unauthenticated') {
+    return <AuthPopup />;
+  }
+
+  // 🔥 3. Safety Check
+  if (!session) return <AuthPopup />;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0A192F] text-slate-900 dark:text-white font-sans transition-colors duration-300 pb-20">
@@ -192,14 +228,21 @@ export default function DashboardPage() {
             {/* --- LEFT: PROFILE CARD --- */}
             <div className="lg:col-span-1 space-y-6">
                 <div className="bg-white dark:bg-[#112240] rounded-3xl p-8 border border-gray-200 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-black/20 relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gray-100 dark:bg-white/5">
+                    
+                    {/* 🔥 GLOWING PROGRESS BAR */}
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gray-100 dark:bg-black/20">
                         <motion.div 
-                            className="h-full bg-gradient-to-r from-teal-400 to-teal-600 shadow-[0_0_10px_#2dd4bf]"
-                            initial={{ width: 0 }} animate={{ width: `${completion}%` }} transition={{ duration: 1 }}
-                        />
+                            className="h-full bg-gradient-to-r from-teal-400 via-emerald-400 to-teal-500 shadow-[0_0_20px_#2dd4bf] relative"
+                            initial={{ width: 0 }} 
+                            animate={{ width: `${completion}%` }} 
+                            transition={{ duration: 1.5, ease: "circOut" }}
+                        >
+                            {/* Little spark at the end of the bar */}
+                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-[0_0_10px_#fff] blur-[1px]"></div>
+                        </motion.div>
                     </div>
 
-                    <div className="flex flex-col items-center text-center mt-2">
+                    <div className="flex flex-col items-center text-center mt-4">
                         <motion.div 
                             className={`relative w-28 h-28 rounded-full p-1 bg-white dark:bg-[#112240] border-4 transition-all duration-500 ${completion === 100 ? 'border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'border-teal-500/20'}`}
                             animate={{ scale: completion === 100 ? [1, 1.05, 1] : 1 }}
@@ -209,8 +252,10 @@ export default function DashboardPage() {
                             ) : (
                                 <div className="w-full h-full rounded-full bg-slate-100 dark:bg-[#0A192F] flex items-center justify-center text-teal-600"><User size={48} /></div>
                             )}
+                            
+                            {/* 🔥 GLOWING PERCENTAGE BADGE */}
                             <motion.div 
-                                className={`absolute bottom-0 right-0 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white dark:border-[#112240] ${completion === 100 ? 'bg-green-500' : 'bg-slate-900 dark:bg-slate-700'}`}
+                                className={`absolute bottom-0 right-0 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white dark:border-[#112240] shadow-lg ${completion === 100 ? 'bg-green-500 shadow-green-500/50' : 'bg-teal-600 shadow-teal-500/50'}`}
                                 key={completion} initial={{ scale: 0 }} animate={{ scale: 1 }}
                             >
                                 {completion}%

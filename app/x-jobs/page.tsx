@@ -1,156 +1,273 @@
 'use client';
+
 import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { MapPin, ArrowRight, Filter, ChevronLeft, ChevronRight, X, CheckCircle, ChevronDown, ChevronUp, Zap, Sparkles } from 'lucide-react';
+import { MapPin, ArrowRight, Filter, ChevronLeft, ChevronRight, X, CheckCircle, ChevronDown, ChevronUp, Zap, Sparkles, List, Navigation } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar'; 
 import JobHero from '@/components/JobHero'; 
-import ProtectedOverlay from '@/components/ProtectedOverlay'; 
 import { useSession } from 'next-auth/react';
+import LoginWall from '@/components/LoginWall'; 
 
-// --- 🌟 PROFESSIONAL TOUR GUIDE (MOBILE OPTIMIZED) 🌟 ---
 const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
+  const { data: session, status } = useSession();
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState({ top: 0, left: 0, width: 0, height: 0 });
   const [isVisible, setIsVisible] = useState(false);
+  const [shouldRunTour, setShouldRunTour] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // 🔥 Performance Optimization: RequestAnimationFrame Lock
+  const ticking = useRef(false);
 
   const steps = [
     { 
       id: 'tour-filters', 
       title: 'Smart Filters', 
+      icon: <Filter size={18} className="text-[#34D399]" />,
       desc: 'Refine your search by Category, Source (Twitter), or Job Type right here.',
     },
     { 
       id: 'tour-feed', 
       title: 'Verified Job Feed', 
+      icon: <List size={18} className="text-[#34D399]" />,
       desc: 'Browse hundreds of verified jobs. We verify the source so you dont have to.',
     },
     { 
       id: 'tour-spotlight', 
       title: 'Spotlight Jobs', 
+      icon: <Zap size={18} className="text-[#34D399] fill-[#34D399]" />,
       desc: 'Look for the Green Glow! These are premium, high-priority hiring alerts.',
     },
     { 
       id: 'tour-navbar', 
       title: 'Navigation Hub', 
+      icon: <Navigation size={18} className="text-[#34D399]" />,
       desc: 'Access Home, Contact, and Profile settings from here.',
     }
   ];
 
-  const updatePosition = () => {
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.email) {
+      const storageKey = `findmework_tour_seen_${session.user.email}`;
+      const hasSeenTour = localStorage.getItem(storageKey);
+      if (!hasSeenTour) {
+        const timer = setTimeout(() => setShouldRunTour(true), 1500);
+        return () => clearTimeout(timer);
+      } else {
+        onComplete();
+      }
+    }
+  }, [status, session, onComplete]);
+
+  const finishTour = () => {
+    if (session?.user?.email) {
+      localStorage.setItem(`findmework_tour_seen_${session.user.email}`, 'true');
+    }
+    setIsVisible(false);
+    setShouldRunTour(false);
+    onComplete();
+  };
+
+  // ==========================================
+  // LOGIC 1: GPU OPTIMIZED TRACKER (Manual Scroll)
+  // ==========================================
+  const updateRectOnly = useCallback(() => {
+    if (isTransitioning) return; 
+
+    // 🔥 Optimization: Agar calculation pehle se queue me hai to dubara mat karo
+    if (!ticking.current) {
+      window.requestAnimationFrame(() => {
+        let targetId = steps[step].id;
+        if (targetId === 'tour-filters') {
+           targetId = window.innerWidth < 1024 ? 'tour-filters-mobile' : 'tour-filters-desktop';
+        }
+        const element = document.getElementById(targetId);
+        if (element) {
+          const newRect = element.getBoundingClientRect();
+          setRect({
+            top: newRect.top + window.scrollY,
+            left: newRect.left + window.scrollX,
+            width: newRect.width,
+            height: newRect.height
+          });
+        }
+        ticking.current = false; // Lock release karo
+      });
+      ticking.current = true; // Lock laga do
+    }
+  }, [step, isTransitioning]);
+
+  useEffect(() => {
+    if (!shouldRunTour) return;
+    window.addEventListener('scroll', updateRectOnly, { passive: true }); // passive: true is CRUCIAL for mobile
+    window.addEventListener('resize', updateRectOnly);
+    return () => {
+      window.removeEventListener('scroll', updateRectOnly);
+      window.removeEventListener('resize', updateRectOnly);
+    };
+  }, [updateRectOnly, shouldRunTour]);
+
+  // ==========================================
+  // LOGIC 2: SMOOTH STEP CHANGE
+  // ==========================================
+  const handleStepChange = () => {
+    if (!shouldRunTour) return;
+
+    setIsTransitioning(true); 
+    setIsVisible(false);      
+
     let targetId = steps[step].id;
     if (targetId === 'tour-filters') {
        targetId = window.innerWidth < 1024 ? 'tour-filters-mobile' : 'tour-filters-desktop';
     }
 
-    const element = document.getElementById(targetId);
-    if (element) {
-      const r = element.getBoundingClientRect();
-      const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
-      
-      setRect({
-        top: r.top + scrollY,
-        left: r.left + scrollX,
-        width: r.width,
-        height: r.height
-      });
-      setIsVisible(true);
-    } else {
-       if (step < steps.length - 1) setStep(s => s + 1);
-       else onComplete();
-    }
+    setTimeout(() => {
+      const element = document.getElementById(targetId);
+      if (element) {
+        const elementRect = element.getBoundingClientRect();
+        const absoluteTop = elementRect.top + window.scrollY;
+
+        let scrollTarget = absoluteTop - 150; 
+        if (step === 1) scrollTarget = absoluteTop - 250; 
+        if (step === 3) scrollTarget = 0; 
+
+        window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+
+        setTimeout(() => {
+          const newRect = element.getBoundingClientRect();
+          setRect({
+            top: newRect.top + window.scrollY,
+            left: newRect.left + window.scrollX,
+            width: newRect.width,
+            height: newRect.height
+          });
+          setIsVisible(true);
+          setIsTransitioning(false); 
+        }, 800); 
+
+      } else {
+         if (step < steps.length - 1) setStep(s => s + 1);
+         else finishTour();
+      }
+    }, 100);
   };
 
   useEffect(() => {
-    updatePosition();
-    
-    let targetId = steps[step].id;
-    if (targetId === 'tour-filters') {
-       targetId = window.innerWidth < 1024 ? 'tour-filters-mobile' : 'tour-filters-desktop';
+    if (shouldRunTour) {
+      handleStepChange();
     }
-    const element = document.getElementById(targetId);
-    if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    const handleResizeOrScroll = () => requestAnimationFrame(updatePosition);
-    window.addEventListener('scroll', handleResizeOrScroll, { passive: true });
-    window.addEventListener('resize', handleResizeOrScroll);
-
-    return () => {
-      window.removeEventListener('scroll', handleResizeOrScroll);
-      window.removeEventListener('resize', handleResizeOrScroll);
-    };
-  }, [step]);
+  }, [step, shouldRunTour]);
 
   const handleNext = () => {
     if (step < steps.length - 1) setStep(step + 1);
-    else onComplete();
+    else finishTour();
   };
 
-  if (!isVisible) return null;
+  if (!shouldRunTour) return null;
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const spaceBelow = window.innerHeight - (rect.top - window.scrollY + rect.height);
-  const showAbove = spaceBelow < 280; 
+  // ==========================================
+  // 🎨 POPUP PLACEMENT
+  // ==========================================
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+  let tooltipTop = 0;
+  let tooltipLeft = 0;
+  const tooltipWidth = 384; 
 
-  const tooltipTop = showAbove ? rect.top - 240 : rect.top + rect.height + 20;
-  
-  let tooltipLeft = isMobile 
-    ? (window.innerWidth / 2) - (Math.min(window.innerWidth * 0.9, 384) / 2) 
-    : rect.left + (rect.width / 2) - 192; 
+  if (isMobile) {
+    const spaceBelow = window.innerHeight - (rect.top - window.scrollY + rect.height);
+    const showAbove = spaceBelow < 280; 
+    tooltipTop = showAbove ? rect.top - 240 : rect.top + rect.height + 20;
+    tooltipLeft = (window.innerWidth / 2) - (Math.min(window.innerWidth * 0.9, 384) / 2);
+  } else {
+    if (step === 0) { 
+      tooltipTop = rect.top; 
+      tooltipLeft = rect.left + rect.width + 20; 
+    } 
+    else if (step === 1) { 
+      tooltipTop = rect.top - 190; 
+      tooltipLeft = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+    } 
+    else if (step === 2) { 
+      tooltipTop = rect.top - 120; 
+      tooltipLeft = rect.left + rect.width - 100; 
+    } 
+    else { 
+      tooltipTop = rect.top + rect.height + 20;
+      tooltipLeft = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+    }
+  }
 
-  if (tooltipLeft < 10) tooltipLeft = 10;
-  if (tooltipLeft + 320 > window.innerWidth) tooltipLeft = window.innerWidth - 330;
-
+  if (tooltipLeft + tooltipWidth > window.innerWidth) tooltipLeft = window.innerWidth - tooltipWidth - 20;
+  if (tooltipLeft < 20) tooltipLeft = 20;
+  if (tooltipTop < window.scrollY + 20) tooltipTop = window.scrollY + 20;
 
   return (
-    <div className="absolute inset-0 z-[9999] pointer-events-none h-full w-full">
-      <motion.div 
-        className="absolute rounded-xl border-4 border-[#10B981] z-50 transform-gpu"
-        initial={false}
-        animate={{ top: rect.top - 4, left: rect.left - 4, width: rect.width + 8, height: rect.height + 8 }}
-        transition={{ type: "spring", stiffness: 180, damping: 25, mass: 0.8 }}
-        style={{ 
-            boxShadow: "0 0 0 99999px rgba(0, 0, 0, 0.75)",
-            WebkitTransform: "translateZ(0)"
-        }}
-      />
-      <motion.div 
-        className="absolute z-[10000] w-[90vw] max-w-sm pointer-events-auto"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1, top: tooltipTop, left: tooltipLeft }}
-        transition={{ type: "spring", stiffness: 150, damping: 20 }}
-      >
-        <div className="bg-[#0f172a] border border-[#10B981] p-6 rounded-2xl shadow-2xl relative overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#10B981]/20 blur-3xl rounded-full pointer-events-none transform-gpu"></div>
-          
-          <div className="relative z-10">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                {step === 2 ? <Zap size={18} className="text-[#34D399] fill-[#34D399]" /> : <Sparkles size={18} className="text-[#34D399]" />}
-                {steps[step].title}
-              </h3>
-              <span className="text-[10px] font-bold tracking-wider text-[#34D399] bg-[#064e3b]/50 px-2 py-1 rounded border border-[#10B981]/20">
-                STEP {step + 1}/{steps.length}
-              </span>
+    <div className="absolute inset-0 z-[9999] pointer-events-none h-full w-full overflow-hidden">
+      
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div 
+            className="absolute rounded-xl border-4 border-[#10B981] z-50 transform-gpu shadow-[0_0_30px_rgba(16,185,129,0.3)]"
+            layoutId="tour-highlight"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ 
+                opacity: 1, 
+                scale: 1, 
+                top: rect.top - 6, 
+                left: rect.left - 6, 
+                width: rect.width + 12, 
+                height: rect.height + 12 
+            }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: isTransitioning ? 100 : 800, damping: isTransitioning ? 20 : 50 }}
+            style={{ 
+              boxShadow: "0 0 0 99999px rgba(0, 0, 0, 0.75)",
+              willChange: "top, left, width, height" 
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div 
+            className="absolute z-[10000] w-[90vw] max-w-sm pointer-events-auto"
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1, top: tooltipTop, left: tooltipLeft }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 120, damping: 15 }}
+            style={{ willChange: "top, left" }} 
+          >
+            <div className="bg-[#0f172a] border border-[#10B981] p-6 rounded-2xl shadow-2xl relative overflow-hidden group">
+               <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#10B981]/20 blur-3xl rounded-full pointer-events-none transition-all group-hover:bg-[#10B981]/30"></div>
+              
+              <div className="relative z-10">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    {steps[step].icon}
+                    {steps[step].title}
+                  </h3>
+                  <span className="text-[10px] font-bold tracking-wider text-[#34D399] bg-[#064e3b]/50 px-2 py-1 rounded border border-[#10B981]/20">
+                    STEP {step + 1}/{steps.length}
+                  </span>
+                </div>
+                <p className="text-slate-300 text-sm leading-relaxed mb-6 font-medium">{steps[step].desc}</p>
+                <button 
+                  onClick={handleNext}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-[#10B981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white font-bold text-sm shadow-lg shadow-[#064e3b]/50 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  {step === steps.length - 1 ? 'Finish Tour' : 'Next Step →'}
+                </button>
+              </div>
             </div>
-            <p className="text-slate-300 text-sm leading-relaxed mb-6 font-medium">{steps[step].desc}</p>
-            <button 
-              onClick={handleNext}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#10B981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white font-bold text-sm shadow-lg shadow-[#064e3b]/50 transition-all active:scale-95 flex items-center justify-center gap-2"
-            >
-              {step === steps.length - 1 ? 'Finish Tour 🚀' : 'Next Step →'}
-            </button>
-          </div>
-        </div>
-      </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
-
 
 // --- EXISTING COMPONENTS & DATA ---
 
@@ -244,7 +361,7 @@ function XJobsContent() {
   useEffect(() => {
     if (status === 'loading') return;
     if (status === 'unauthenticated') {
-         sessionStorage.removeItem('tour_seen_v8');
+          sessionStorage.removeItem('tour_seen_v8');
     }
     if (status === 'authenticated') {
         const hasSeen = sessionStorage.getItem('tour_seen_v8');
@@ -257,34 +374,15 @@ function XJobsContent() {
     setShowTour(false);
   };
 
-  const handleJobClick = async (jobId: string) => {
+  const handleJobClick = (jobId: string) => {
     setActiveId(jobId);
-    if (!viewedJobs.current.has(jobId)) {
-        viewedJobs.current.add(jobId);
-        try {
-            await fetch('/api/jobs', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'view', job_id: jobId })
-            });
-        } catch (error) {
-            console.error("View increment failed", error);
-        }
-    }
+    // ❌ API call removed (Duplicate count fix)
   };
 
-  const handleApplyClick = async (e: React.MouseEvent, jobId: string, url: string) => {
+  const handleApplyClick = (e: React.MouseEvent, jobId: string, url: string) => {
     e.stopPropagation(); 
     handleJobClick(jobId);
-    try {
-        await fetch('/api/jobs', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'click', job_id: jobId })
-        });
-    } catch (error) {
-        console.error("Click increment failed", error);
-    }
+    // ❌ API call removed 
   };
 
   const updateUrl = useCallback((updates: Record<string, string>) => {
@@ -425,9 +523,17 @@ function XJobsContent() {
     updateUrl({ sub: id, page: '1' });
   };
 
+  // 🔥 LOGIN WALL LOGIC 🔥
+  // Check if user is logged out (and not loading)
+  const showLoginWall = status === 'unauthenticated';
+  
+  // If Wall is active, show only top 6 jobs from the entire list.
+  // Otherwise, use standard pagination logic.
+  const jobsToRender = showLoginWall 
+      ? filteredJobs.slice(0, 6) 
+      : filteredJobs.slice((currentPage - 1) * ITEMS_PER_PAGE, (currentPage - 1) * ITEMS_PER_PAGE + ITEMS_PER_PAGE);
+
   const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentJobs = filteredJobs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const goToNextPage = () => { 
       if (currentPage < totalPages) {
@@ -443,7 +549,7 @@ function XJobsContent() {
   };
 
   return (
-    <ProtectedOverlay>
+    <>
           {showTour && <TourGuide onComplete={handleTourComplete} />}
 
           <div id="tour-navbar" className="sticky top-0 z-50">
@@ -541,126 +647,137 @@ function XJobsContent() {
                            <button onClick={() => {setSearchQuery(""); setActiveSubFilter("all"); updateUrl({ search: '', sub: 'all' }); }} className="mt-4 text-blue-600 font-bold hover:underline">Clear Filters</button>
                        </div>
                    ) : (
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
-                      {currentJobs.map((job, index) => {
-                          const isActive = activeId === job.job_id;
-                          const isExpanded = expandedId === job.job_id;
-                          const isSpotlight = !!job.isSpotlight;
-                          const tourId = index === 0 ? 'tour-feed-start' : (isSpotlight ? 'tour-spotlight' : undefined);
+                   <div className="relative">
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
+                          {jobsToRender.map((job, index) => {
+                              const isActive = activeId === job.job_id;
+                              const isExpanded = expandedId === job.job_id;
+                              const isSpotlight = !!job.isSpotlight;
+                              const tourId = index === 0 ? 'tour-feed-start' : (isSpotlight ? 'tour-spotlight' : undefined);
 
-                          return (
-                            <motion.div 
-                              key={job.job_id} 
-                              id={tourId}
-                              layout={!isMobile} 
-                              
-                              style={{ WebkitTransform: "translateZ(0)" }}
-                              
-                              whileHover={!isMobile ? { 
-                                  scale: 1.02, 
-                                  y: -5, 
-                                  boxShadow: isSpotlight 
-                                    ? "0px 10px 30px rgba(16, 185, 129, 0.4)" 
-                                    : "0px 10px 20px rgba(0,0,0,0.1)" 
-                              } : {}}
-                              
-                              whileTap={{ scale: 0.98 }}
-                              
-                              onClick={() => {
-                                sessionStorage.setItem('instant_job_data', JSON.stringify(job));
-                                handleJobClick(job.job_id);
-                                router.push(`/x-jobs/${job.job_id}`);
-                              }}
-                              
-                              animate={isActive ? { 
-                                  borderColor: isSpotlight ? "#10B981" : "#0a66c2", 
-                                  boxShadow: isSpotlight 
-                                    ? "0px 0px 20px rgba(16, 185, 129, 0.4)" 
-                                    : "0px 0px 15px rgba(10, 102, 194, 0.2)" 
-                              } : { 
-                                  borderColor: isSpotlight ? "#34D399" : "rgba(255,255,255,0.05)", 
-                                  y: 0, 
-                                  boxShadow: isSpotlight ? "0px 4px 15px rgba(16, 185, 129, 0.15)" : "none" 
-                              }}
-                              
-                              className={`
-                                rounded-xl border p-5 cursor-pointer flex flex-col relative overflow-hidden transition-colors
-                                ${isSpotlight 
-                                    ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50 dark:from-emerald-950/30 dark:via-[#112240] dark:to-emerald-950/10 border-emerald-400 dark:border-emerald-500/50' 
-                                    : 'bg-white dark:bg-[#112240] border-gray-200 dark:border-white/5'}
-                                ${isActive ? 'z-10' : ''}
-                              `}
-                            >
-                              
-                              {isSpotlight && (
-                                <div className="absolute top-0 right-0 z-20">
-                                    <div className="bg-emerald-500 text-white text-[9px] font-extrabold px-3 py-1 rounded-bl-xl shadow-sm flex items-center gap-1 tracking-wider">
-                                        <Zap size={10} fill="currentColor" /> SPOTLIGHT
+                              return (
+                                <motion.div 
+                                  key={job.job_id} 
+                                  id={tourId}
+                                  layout={!isMobile} 
+                                  
+                                  style={{ WebkitTransform: "translateZ(0)" }}
+                                  
+                                  whileHover={!isMobile ? { 
+                                      scale: 1.02, 
+                                      y: -5, 
+                                      boxShadow: isSpotlight 
+                                        ? "0px 10px 30px rgba(16, 185, 129, 0.4)" 
+                                        : "0px 10px 20px rgba(0,0,0,0.1)" 
+                                  } : {}}
+                                  
+                                  whileTap={{ scale: 0.98 }}
+                                  
+                                  onClick={() => {
+                                    sessionStorage.setItem('instant_job_data', JSON.stringify(job));
+                                    handleJobClick(job.job_id);
+                                    router.push(`/x-jobs/${job.job_id}`);
+                                  }}
+                                  
+                                  animate={isActive ? { 
+                                      borderColor: isSpotlight ? "#10B981" : "#0a66c2", 
+                                      boxShadow: isSpotlight 
+                                        ? "0px 0px 20px rgba(16, 185, 129, 0.4)" 
+                                        : "0px 0px 15px rgba(10, 102, 194, 0.2)" 
+                                  } : { 
+                                      borderColor: isSpotlight ? "#34D399" : "rgba(255,255,255,0.05)", 
+                                      y: 0, 
+                                      boxShadow: isSpotlight ? "0px 4px 15px rgba(16, 185, 129, 0.15)" : "none" 
+                                  }}
+                                  
+                                  className={`
+                                    rounded-xl border p-5 cursor-pointer flex flex-col relative overflow-hidden transition-colors
+                                    ${isSpotlight 
+                                        ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50 dark:from-emerald-950/30 dark:via-[#112240] dark:to-emerald-950/10 border-emerald-400 dark:border-emerald-500/50' 
+                                        : 'bg-white dark:bg-[#112240] border-gray-200 dark:border-white/5'}
+                                    ${isActive ? 'z-10' : ''}
+                                  `}
+                                >
+                                  
+                                  {isSpotlight && (
+                                    <div className="absolute top-0 right-0 z-20">
+                                        <div className="bg-emerald-500 text-white text-[9px] font-extrabold px-3 py-1 rounded-bl-xl shadow-sm flex items-center gap-1 tracking-wider">
+                                            <Zap size={10} fill="currentColor" /> SPOTLIGHT
+                                        </div>
                                     </div>
-                                </div>
-                              )}
+                                  )}
 
-                              <div className="flex justify-between items-start mb-4">
-                                  <img 
-                                     src={job.employer_logo || "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg"} 
-                                     alt="Logo" 
-                                     className="w-10 h-10 rounded-full shadow-sm object-contain bg-white p-1" 
-                                  />
-                                  <div className={`flex flex-col items-end gap-1 ${isSpotlight ? 'mt-6' : ''}`}>
-                                    <span className="text-[10px] font-bold px-2 py-1 rounded uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                      {job.category || "Job"}
-                                    </span>
-                                    <span className="text-[9px] flex items-center gap-0.5 text-green-600 dark:text-green-400 font-bold uppercase tracking-tighter">
-                                      <CheckCircle size={10} /> Email Included
+                                  <div className="flex justify-between items-start mb-4">
+                                      <img 
+                                          src={job.employer_logo || "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg"} 
+                                          alt="Logo" 
+                                          className="w-10 h-10 rounded-full shadow-sm object-contain bg-white p-1" 
+                                      />
+                                      <div className={`flex flex-col items-end gap-1 ${isSpotlight ? 'mt-6' : ''}`}>
+                                        <span className="text-[10px] font-bold px-2 py-1 rounded uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                          {job.category || "Job"}
+                                        </span>
+                                        <span className="text-[9px] flex items-center gap-0.5 text-green-600 dark:text-green-400 font-bold uppercase tracking-tighter">
+                                          <CheckCircle size={10} /> Email Included
+                                        </span>
+                                      </div>
+                                  </div>
+                                  
+                                  <h3 className={`font-bold text-lg leading-tight mb-1 flex items-center gap-2 ${isSpotlight ? 'text-emerald-800 dark:text-emerald-100' : 'text-slate-900 dark:text-white'}`}>
+                                    {job.job_title}
+                                    {isSpotlight && <Sparkles size={14} className="text-emerald-500 fill-emerald-500 animate-pulse" />}
+                                  </h3>
+                                  <p className="text-sm font-medium text-slate-600 dark:text-gray-300 mb-3">@{job.employer_name || "Hiring Manager"}</p>
+                                  
+                                  <div className="flex flex-wrap gap-2 mb-4">
+                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wide ${isSpotlight ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200' : 'bg-gray-100 dark:bg-white/5 text-slate-500 dark:text-gray-400'}`}>
+                                      <MapPin size={10} /> {job.work_mode || "Remote"} / {job.country || "Global"}
                                     </span>
                                   </div>
-                              </div>
-                              
-                              <h3 className={`font-bold text-lg leading-tight mb-1 flex items-center gap-2 ${isSpotlight ? 'text-emerald-800 dark:text-emerald-100' : 'text-slate-900 dark:text-white'}`}>
-                                {job.job_title}
-                                {isSpotlight && <Sparkles size={14} className="text-emerald-500 fill-emerald-500 animate-pulse" />}
-                              </h3>
-                              <p className="text-sm font-medium text-slate-600 dark:text-gray-300 mb-3">@{job.employer_name || "Hiring Manager"}</p>
-                              
-                              <div className="flex flex-wrap gap-2 mb-4">
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wide ${isSpotlight ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200' : 'bg-gray-100 dark:bg-white/5 text-slate-500 dark:text-gray-400'}`}>
-                                  <MapPin size={10} /> {job.work_mode || "Remote"} / {job.country || "Global"}
-                                </span>
-                              </div>
-                              
-                              <div className="text-xs text-slate-500 dark:text-gray-400 mb-4 relative">
-                                <p className={isExpanded ? "whitespace-pre-wrap" : "line-clamp-3"}>{job.text}</p>
-                                {job.text && job.text.length > 100 && (
-                                  <button onClick={(e) => toggleExpand(e, job.job_id)} className="text-[#0a66c2] font-bold mt-1 hover:underline focus:outline-none">
-                                    {isExpanded ? "Show less" : "Read thread..."}
-                                  </button>
-                                )}
-                              </div>
-
-                              <div className={`mt-auto pt-4 border-t flex items-center justify-between ${isSpotlight ? 'border-emerald-200 dark:border-emerald-800/30' : 'border-gray-100 dark:border-white/5'}`}>
-                                  <div>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase">Source</p>
-                                    <p className="text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1">Verified Community</p>
+                                  
+                                  <div className="text-xs text-slate-500 dark:text-gray-400 mb-4 relative">
+                                    <p className={isExpanded ? "whitespace-pre-wrap" : "line-clamp-3"}>{job.text}</p>
+                                    {job.text && job.text.length > 100 && (
+                                      <button onClick={(e) => toggleExpand(e, job.job_id)} className="text-[#0a66c2] font-bold mt-1 hover:underline focus:outline-none">
+                                        {isExpanded ? "Show less" : "Read thread..."}
+                                      </button>
+                                    )}
                                   </div>
-                                  <button 
-                                      onClick={(e) => {
-                                          e.stopPropagation(); 
-                                          handleApplyClick(e, job.job_id, job.apply_link);
-                                          sessionStorage.setItem('instant_job_data', JSON.stringify(job));
-                                          router.push(`/x-jobs/${job.job_id}`);
-                                      }}
-                                      className={`${isSpotlight ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-[#0A192F] dark:bg-white text-white dark:text-[#0A192F]'} px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1 shadow-sm`}
-                                  >
-                                      Apply Direct <ArrowRight size={12} />
-                                  </button>
-                              </div>
-                            </motion.div>
-                          );
-                      })}
+
+                                  <div className={`mt-auto pt-4 border-t flex items-center justify-between ${isSpotlight ? 'border-emerald-200 dark:border-emerald-800/30' : 'border-gray-100 dark:border-white/5'}`}>
+                                      <div>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase">Source</p>
+                                        <p className="text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1">Verified Community</p>
+                                      </div>
+                                      <button 
+                                          onClick={(e) => {
+                                              e.stopPropagation(); 
+                                              handleApplyClick(e, job.job_id, job.apply_link);
+                                              sessionStorage.setItem('instant_job_data', JSON.stringify(job));
+                                              router.push(`/x-jobs/${job.job_id}`);
+                                          }}
+                                          className={`${isSpotlight ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-[#0A192F] dark:bg-white text-white dark:text-[#0A192F]'} px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1 shadow-sm`}
+                                      >
+                                            Apply Direct <ArrowRight size={12} />
+                                      </button>
+                                  </div>
+                                </motion.div>
+                              );
+                          })}
+                       </div>
+
+                        {/* 🔥 LOGIN WALL RENDER 🔥 */}
+                        {showLoginWall && (
+                            <div className="relative mt-8">
+                                <div className="absolute -top-32 left-0 w-full h-40 bg-gradient-to-b from-transparent to-[#f8f9fa] dark:to-[#0A192F] pointer-events-none z-10"></div>
+                                <LoginWall />
+                            </div>
+                        )}
                    </div>
                    )}
 
-                   {filteredJobs.length > ITEMS_PER_PAGE && (
+                   {/* Hide pagination if Wall is shown */}
+                   {!showLoginWall && filteredJobs.length > ITEMS_PER_PAGE && (
                      <div className="flex justify-center items-center gap-4 mt-10">
                         <button onClick={goToPrevPage} disabled={currentPage === 1} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-[#112240] border border-gray-200 dark:border-white/10 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 font-medium text-sm"><ChevronLeft size={16} /> Previous</button>
                         <span className="text-sm font-bold text-slate-600 dark:text-gray-400">Page {currentPage} of {totalPages}</span>
@@ -724,7 +841,7 @@ function XJobsContent() {
               </>
             )}
           </AnimatePresence>
-    </ProtectedOverlay>
+    </>
   );
 }
 

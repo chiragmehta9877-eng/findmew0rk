@@ -1,13 +1,21 @@
 'use client';
-import React, { useEffect } from 'react'; // 🔥 Import useEffect
+
+import React, { useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation'; // 🔥 URL se redirect pakdne ke liye
 import { motion } from 'framer-motion';
 import { Zap, ArrowLeft, Chrome } from 'lucide-react';
 
-export default function LoginPage() {
+// 🔥 Main Content Component
+function LoginContent() {
+  const searchParams = useSearchParams();
   
-  // 🔥 FIX: Check Dark Mode on Page Load
+  // 🚀 MAGIC FIX: Agar URL me 'callbackUrl' hai (jaise /x-jobs), toh wahin wapas bhejo.
+  // Nahi toh default '/' (Home) par bhejo.
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
+
+  // 🔥 Check Dark Mode on Page Load
   useEffect(() => {
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
@@ -17,16 +25,15 @@ export default function LoginPage() {
   }, []);
 
   const handleLogin = (provider: string) => {
-    // NextAuth handles the redirection
-    signIn(provider, { callbackUrl: '/' });
+    // ✅ Ab ye user ko wapas wahin bhejega jahan se wo aaya tha (jaise x-jobs)
+    signIn(provider, { callbackUrl: callbackUrl });
   };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-[#0A192F] relative overflow-hidden font-sans transition-colors duration-300">
       
-      {/* --- Background Effects (Futuristic Glows) --- */}
+      {/* --- Background Effects --- */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        {/* 🔥 MAC OPTIMIZED: transform-gpu */}
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-teal-500/20 rounded-full blur-[120px] animate-pulse transform-gpu will-change-transform"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse delay-1000 transform-gpu will-change-transform"></div>
       </div>
@@ -69,7 +76,6 @@ export default function LoginPage() {
             <div className="h-px bg-gray-200 dark:bg-white/10 flex-1"></div>
           </div>
 
-          {/* 🔥 PRIVACY POLICY LINK ADDED HERE */}
           <p className="text-center text-xs text-slate-500 dark:text-gray-400 mt-6">
             By continuing, you agree to our{' '}
             <Link 
@@ -83,5 +89,14 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+// 🔥 Suspense Wrapper (Next.js 13+ me SearchParams use karne ke liye zaroori hai)
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#0A192F] text-white">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react'; 
 import Navbar from '@/components/Navbar';
@@ -22,6 +22,9 @@ export default function JobDetailsClient() {
   const [checkingBookmark, setCheckingBookmark] = useState(true);
   const [copied, setCopied] = useState(false);
 
+  // 🔥 VIEW COUNT LOCK: Ensures view is counted ONLY ONCE per page load
+  const hasViewed = useRef(false);
+
   const getBaseId = (id: any) => {
       if (!id) return "";
       let str = Array.isArray(id) ? id[0] : String(id);
@@ -30,12 +33,13 @@ export default function JobDetailsClient() {
       return str.includes('__') ? str.split('__')[0].trim() : str.trim();
   };
 
-  // 1. Fetch Job
+  // 1. Fetch Job & Increment View Count
   useEffect(() => {
     if (params?.id) {
       const fetchId = Array.isArray(params.id) ? params.id[0] : params.id;
       let isInstantlyLoaded = false;
 
+      // Try loading from session cache first
       try {
           const cachedData = sessionStorage.getItem('instant_job_data');
           if (cachedData) {
@@ -53,6 +57,16 @@ export default function JobDetailsClient() {
         .then((data) => {
           if (data.success) {
             setJob(data.data);
+            
+            // 🔥 VIEW COUNT LOGIC: Only run if not already ran
+            if (!hasViewed.current) {
+                hasViewed.current = true; // Lock applied
+                fetch('/api/jobs', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'view', job_id: fetchId })
+                }).catch(err => console.error("View increment failed", err));
+            }
           }
           if (!isInstantlyLoaded) setLoading(false);
         })
@@ -106,11 +120,30 @@ export default function JobDetailsClient() {
     } catch (err) { setIsSaved(previousState); alert("Failed to save job."); }
   };
 
+  // Copy Link (Desktop)
   const handleCopyLink = () => {
     if (typeof window !== 'undefined') {
       navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  // 🔥 Share Logic (Mobile)
+  const handleMobileShare = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: job?.job_title || 'Job Opportunity',
+          text: `Check out this job opening at ${job?.employer_name || 'FindMeWork'}`,
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.log('Error sharing:', error);
+      }
+    } else {
+      // Fallback to copy if share not supported
+      handleCopyLink();
     }
   };
 
@@ -144,7 +177,7 @@ export default function JobDetailsClient() {
       );
   }
 
-  if (!job) return <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f9fa] dark:bg-[#0A192F] text-slate-600 dark:text-gray-400"><h2 className="text-2xl font-bold mb-4">Job Not Found</h2><button onClick={() => router.back()} className="text-blue-500 hover:underline">Go Back</button></div>;
+  if (!job) return <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f9fa] dark:bg-[#0A192F] text-slate-600 dark:text-gray-400"><h2 className="text-2xl font-bold mb-4">Job Not Found</h2><button onClick={() => router.push('/x-jobs')} className="text-blue-500 hover:underline">Go Back</button></div>;
 
   const baseTweetId = getBaseId(job.job_id);
   const rawUsername = job.username || job.handle || job.screen_name || job.employer_name || 'i';
@@ -172,7 +205,8 @@ export default function JobDetailsClient() {
       <Navbar />
        
       <div className="container mx-auto px-4 py-10 max-w-4xl">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 dark:text-gray-400 hover:text-[#0a66c2] mb-6 transition-colors font-medium">
+        {/* 🔥 Redirect to X-Jobs Page instead of simple back */}
+        <button onClick={() => router.push('/x-jobs')} className="flex items-center gap-2 text-slate-500 dark:text-gray-400 hover:text-[#0a66c2] mb-6 transition-colors font-medium">
           <ArrowLeft size={18} /> Back to Jobs
         </button>
 
@@ -193,6 +227,8 @@ export default function JobDetailsClient() {
                   <span className="flex items-center gap-1"><Calendar size={16} /> Posted {new Date(job.posted_at).toLocaleDateString()}</span>
                 </div>
               </div>
+              
+              {/* Desktop Copy Button */}
               <button onClick={handleCopyLink} className="hidden md:flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors" title="Copy Page Link">
                 {copied ? <CheckCircle size={20} className="text-green-500" /> : <Share2 size={20} />}
               </button>
@@ -263,12 +299,13 @@ export default function JobDetailsClient() {
                   {checkingBookmark ? "Checking..." : isSaved ? "Saved" : "Save Job"}
                 </button>
                   
+                {/* 🔥 SMART MOBILE SHARE BUTTON */}
                 <button 
-                  onClick={handleCopyLink} 
+                  onClick={handleMobileShare} 
                   className="md:hidden w-full flex items-center justify-center gap-2 border-2 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white font-bold py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                 >
-                  {copied ? <CheckCircle size={18} className="text-green-500" /> : <Copy size={18} />} 
-                  {copied ? "Link Copied" : "Copy Link"}
+                  {copied ? <CheckCircle size={18} className="text-green-500" /> : <Share2 size={18} />} 
+                  {copied ? "Link Copied" : "Share Job"}
                 </button>
 
                 <a href={finalExternalLink} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors">
