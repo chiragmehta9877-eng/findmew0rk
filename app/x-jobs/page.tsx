@@ -482,7 +482,13 @@ function XJobsContent() {
 
   const fetchJobs = useCallback((hasCache = false) => {
     if (!hasCache) setLoading(true);
-    fetch(`/api/jobs?limit=10000&t=${Date.now()}`) 
+    
+    // 🔥 FIX: Added the secret header so Backend recognizes this request!
+    fetch(`/api/jobs?limit=10000&t=${Date.now()}`, {
+        headers: {
+            'x-internal-request': 'findmework-secure-call'
+        }
+    }) 
       .then(res => res.json())
       .then(data => {
          if(data.success) {
@@ -497,15 +503,16 @@ function XJobsContent() {
             setLoading(false);
             try { sessionStorage.setItem('xjobs_data_cache_v1', JSON.stringify(sortedJobs)); } catch(e){}
          } else {
+             console.error("API Error Response:", data.message);
              setLoading(false);
          }
       })
       .catch(err => {
-        console.error(err);
+        console.error("Fetch failed:", err);
         setLoading(false);
       });
   }, []);
-
+  
   useEffect(() => {
     if (isMounted) {
        let hasCache = false;
