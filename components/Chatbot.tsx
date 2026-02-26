@@ -11,7 +11,7 @@ const getBotResponse = (input: string): { text: string; link?: string; linkText?
 
   // 1. GREETINGS & CASUAL
   if (lowerInput.match(/\b(hi|hello|hey|greetings|sup)\b/)) {
-    return { text: "Hello! I'm FindMeWork AI. Ready to hunt some jobs?" };
+    return { text: "Hello! I'm FindMeWork Bot. Ready to hunt some jobs?" };
   }
   if (lowerInput.includes("how are you") || lowerInput.includes("how r u")) {
     return { text: "I'm just code, but I'm feeling fantastic! Thanks for asking. How can I help your career today?" };
@@ -77,7 +77,7 @@ export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { id: 1, text: "Hi! I'm your AI Recruiter. How can I help?", sender: 'bot' }
+    { id: 1, text: "Hi! I'm your Recruiter. How can I help?", sender: 'bot' }
   ]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);

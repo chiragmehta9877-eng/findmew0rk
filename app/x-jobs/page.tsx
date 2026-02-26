@@ -1,14 +1,91 @@
 'use client';
 
-import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, Suspense, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { MapPin, ArrowRight, Filter, ChevronLeft, ChevronRight, X, CheckCircle, ChevronDown, ChevronUp, Zap, Sparkles, List, Navigation } from 'lucide-react';
+import { MapPin, ArrowRight, Filter, ChevronLeft, ChevronRight, X, CheckCircle, ChevronDown, ChevronUp, Zap, Sparkles, List, Navigation, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar'; 
 import JobHero from '@/components/JobHero'; 
 import { useSession } from 'next-auth/react';
 import LoginWall from '@/components/LoginWall'; 
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+const DOMAINS_MAP: Record<string, string> = { 
+  'za':'South Africa', 'uk':'UK', 'in':'India', 'au':'Australia', 'sg':'Singapore', 'ae':'UAE', 
+  'ng':'Nigeria', 'ke':'Kenya', 'id':'Indonesia', 'nl':'Netherlands', 'de':'Germany', 'fr':'France', 
+  'it':'Italy', 'es':'Spain', 'ca':'Canada', 'nz':'New Zealand', 'my':'Malaysia', 'ph':'Philippines', 
+  'pk':'Pakistan', 'bd':'Bangladesh', 'lk':'Sri Lanka', 'np':'Nepal', 'gh':'Ghana', 'ug':'Uganda', 
+  'tz':'Tanzania', 'zm':'Zambia', 'ie': 'Ireland', 'ch': 'Switzerland', 'se': 'Sweden', 'no': 'Norway', 
+  'fi': 'Finland', 'dk': 'Denmark', 'pl': 'Poland', 'be': 'Belgium', 'pt': 'Portugal', 'at': 'Austria',
+  'gr': 'Greece', 'cz': 'Czech Republic', 'hu': 'Hungary', 'ro': 'Romania', 'tr': 'Turkey', 'eg': 'Egypt', 
+  'ma': 'Morocco', 'br': 'Brazil', 'mx': 'Mexico', 'ar': 'Argentina', 'cl': 'Chile' 
+};
+
+const PHONE_CODES_MAP: Record<string, string> = { 
+  '+44':'UK', '+91':'India', '+61':'Australia', '+65':'Singapore', '+971':'UAE', '+234':'Nigeria', 
+  '+254':'Kenya', '+27':'South Africa', '+62':'Indonesia', '+31':'Netherlands', '+49':'Germany', 
+  '+33':'France', '+39':'Italy', '+34':'Spain', '+64':'New Zealand', '+60':'Malaysia', '+63':'Philippines', 
+  '+92':'Pakistan', '+880':'Bangladesh', '+94':'Sri Lanka', '+977':'Nepal', '+233':'Ghana', '+256':'Uganda', 
+  '+255':'Tanzania', '+260':'Zambia', '+353':'Ireland', '+41':'Switzerland', '+46':'Sweden', '+47':'Norway', 
+  '+45':'Denmark', '+358':'Finland', '+32':'Belgium', '+351':'Portugal', '+43':'Austria', '+30':'Greece',
+  '+420':'Czech', '+36':'Hungary', '+40':'Romania', '+90':'Turkey', '+20':'Egypt', '+212':'Morocco',
+  '+55':'Brazil', '+52':'Mexico', '+54':'Argentina', '+56':'Chile', '+57':'Colombia'
+};
+
+const COUNTRY_DICT: Record<string, string[]> = {
+  "USA": ["usa", "united states", "new york", "nyc", "san francisco", "sf", "bay area", "silicon valley", "california", "texas", "seattle", "chicago", "boston", "austin", "miami", "florida", "washington", "colorado", "remote us"],
+  "UK": ["uk", "united kingdom", "london", "manchester", "birmingham", "edinburgh", "england", "scotland", "wales", "remote uk"],
+  "India": ["india", "ind", "panindia", "pan india", "bangalore", "bengaluru", "delhi", "new delhi", "ncr", "noida", "gurugram", "gurgaon", "mumbai", "pune", "hyderabad", "chennai", "kolkata", "ahmedabad", "maharashtra", "karnataka", "tamil nadu", "gujarat", "kerala", "haryana", "punjab"],
+  "Canada": ["canada", "toronto", "vancouver", "montreal", "calgary", "ontario", "bc", "british columbia", "alberta"],
+  "Australia": ["australia", "sydney", "melbourne", "brisbane", "perth", "nsw", "victoria", "queensland"],
+  "Germany": ["germany", "berlin", "munich", "hamburg", "frankfurt", "deutschland"],
+  "Netherlands": ["netherlands", "amsterdam", "rotterdam", "dutch"],
+  "France": ["france", "paris", "lyon", "marseille"],
+  "Spain": ["spain", "madrid", "barcelona", "valencia"],
+  "Italy": ["italy", "rome", "milan", "milano", "naples"],
+  "Belgium": ["belgium", "brussels", "antwerp"],
+  "Portugal": ["portugal", "lisbon", "porto"],
+  "Austria": ["austria", "vienna"],
+  "Switzerland": ["switzerland", "zurich", "geneva"],
+  "Ireland": ["ireland", "dublin"],
+  "Sweden": ["sweden", "stockholm"],
+  "Norway": ["norway", "oslo"],
+  "Denmark": ["denmark", "copenhagen"],
+  "Finland": ["finland", "helsinki"],
+  "Poland": ["poland", "warsaw", "krakow"],
+  "Greece": ["greece", "athens"],
+  "Singapore": ["singapore", "sg"],
+  "UAE": ["uae", "united arab emirates", "dubai", "abu dhabi"],
+  "Saudi Arabia": ["saudi arabia", "riyadh", "jeddah", "ksa"],
+  "Qatar": ["qatar", "doha"],
+  "Nigeria": ["nigeria", "lagos", "abuja", "vi, lagos"],
+  "Kenya": ["kenya", "nairobi", "mombasa"],
+  "South Africa": ["south africa", "capetown", "johannesburg", "pretoria", "durban", "rsa"],
+  "Egypt": ["egypt", "cairo", "alexandria"],
+  "Morocco": ["morocco", "casablanca"],
+  "Indonesia": ["indonesia", "jakarta", "bali", "surabaya", "makassar", "kirim lamaran", "loker"],
+  "Malaysia": ["malaysia", "kuala lumpur", "kl"],
+  "Philippines": ["philippines", "manila", "makati", "cebu"],
+  "Pakistan": ["pakistan", "karachi", "lahore", "islamabad"],
+  "Bangladesh": ["bangladesh", "dhaka"],
+  "New Zealand": ["new zealand", "auckland", "wellington", "nz"],
+  "Mexico": ["mexico", "mexico city"],
+  "Brazil": ["brazil", "sao paulo", "rio de janeiro"],
+  "Argentina": ["argentina", "buenos aires"],
+  "Colombia": ["colombia", "bogota"],
+  "Chile": ["chile", "santiago"],
+  "Japan": ["japan", "tokyo", "osaka"],
+  "South Korea": ["south korea", "seoul"],
+  "Europe": ["europe", "eu"]
+};
+
+const PRECOMPILED_COUNTRY_REGEXES = Object.entries(COUNTRY_DICT).map(([country, keywords]) => ({
+  country,
+  regex: new RegExp(`\\b(${keywords.join('|')})\\b`, 'i')
+}));
+
 
 const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
   const { data: session, status } = useSession();
@@ -18,7 +95,6 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
   const [shouldRunTour, setShouldRunTour] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   
-  // 🔥 Performance Optimization: RequestAnimationFrame Lock
   const ticking = useRef(false);
 
   const steps = [
@@ -70,13 +146,8 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
     onComplete();
   };
 
-  // ==========================================
-  // LOGIC 1: GPU OPTIMIZED TRACKER (Manual Scroll)
-  // ==========================================
   const updateRectOnly = useCallback(() => {
     if (isTransitioning) return; 
-
-    // 🔥 Optimization: Agar calculation pehle se queue me hai to dubara mat karo
     if (!ticking.current) {
       window.requestAnimationFrame(() => {
         let targetId = steps[step].id;
@@ -93,15 +164,15 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
             height: newRect.height
           });
         }
-        ticking.current = false; // Lock release karo
+        ticking.current = false; 
       });
-      ticking.current = true; // Lock laga do
+      ticking.current = true; 
     }
   }, [step, isTransitioning]);
 
   useEffect(() => {
     if (!shouldRunTour) return;
-    window.addEventListener('scroll', updateRectOnly, { passive: true }); // passive: true is CRUCIAL for mobile
+    window.addEventListener('scroll', updateRectOnly, { passive: true }); 
     window.addEventListener('resize', updateRectOnly);
     return () => {
       window.removeEventListener('scroll', updateRectOnly);
@@ -109,9 +180,6 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
     };
   }, [updateRectOnly, shouldRunTour]);
 
-  // ==========================================
-  // LOGIC 2: SMOOTH STEP CHANGE
-  // ==========================================
   const handleStepChange = () => {
     if (!shouldRunTour) return;
 
@@ -167,9 +235,6 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
 
   if (!shouldRunTour) return null;
 
-  // ==========================================
-  // 🎨 POPUP PLACEMENT
-  // ==========================================
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
   let tooltipTop = 0;
   let tooltipLeft = 0;
@@ -205,27 +270,16 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
 
   return (
     <div className="absolute inset-0 z-[9999] pointer-events-none h-full w-full overflow-hidden">
-      
       <AnimatePresence>
         {isVisible && (
           <motion.div 
             className="absolute rounded-xl border-4 border-[#10B981] z-50 transform-gpu shadow-[0_0_30px_rgba(16,185,129,0.3)]"
             layoutId="tour-highlight"
             initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ 
-                opacity: 1, 
-                scale: 1, 
-                top: rect.top - 6, 
-                left: rect.left - 6, 
-                width: rect.width + 12, 
-                height: rect.height + 12 
-            }}
+            animate={{ opacity: 1, scale: 1, top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ type: "spring", stiffness: isTransitioning ? 100 : 800, damping: isTransitioning ? 20 : 50 }}
-            style={{ 
-              boxShadow: "0 0 0 99999px rgba(0, 0, 0, 0.75)",
-              willChange: "top, left, width, height" 
-            }}
+            style={{ boxShadow: "0 0 0 99999px rgba(0, 0, 0, 0.75)", willChange: "top, left, width, height" }}
           />
         )}
       </AnimatePresence>
@@ -242,7 +296,6 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
           >
             <div className="bg-[#0f172a] border border-[#10B981] p-6 rounded-2xl shadow-2xl relative overflow-hidden group">
                <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#10B981]/20 blur-3xl rounded-full pointer-events-none transition-all group-hover:bg-[#10B981]/30"></div>
-              
               <div className="relative z-10">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -254,10 +307,7 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
                   </span>
                 </div>
                 <p className="text-slate-300 text-sm leading-relaxed mb-6 font-medium">{steps[step].desc}</p>
-                <button 
-                  onClick={handleNext}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-[#10B981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white font-bold text-sm shadow-lg shadow-[#064e3b]/50 transition-all active:scale-95 flex items-center justify-center gap-2"
-                >
+                <button onClick={handleNext} className="w-full py-3 rounded-xl bg-gradient-to-r from-[#10B981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white font-bold text-sm shadow-lg shadow-[#064e3b]/50 transition-all active:scale-95 flex items-center justify-center gap-2">
                   {step === steps.length - 1 ? 'Finish Tour' : 'Next Step →'}
                 </button>
               </div>
@@ -269,8 +319,6 @@ const TourGuide = ({ onComplete }: { onComplete: () => void }) => {
   );
 };
 
-// --- EXISTING COMPONENTS & DATA ---
-
 const XLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -278,7 +326,6 @@ const XLogo = ({ className }: { className?: string }) => (
 );
 
 const SUB_CATEGORIES = [
-  { name: "All", value: "all" },
   { name: "IT & Software", value: "software" }, 
   { name: "Finance & Accounting", value: "finance" },
   { name: "Business & Management", value: "management" },
@@ -299,8 +346,11 @@ const MAIN_FILTERS = [
 
 const ITEMS_PER_PAGE = 12;
 
-// 🔥 SAFE LAYOUT EFFECT TO PREVENT NEXT.JS SSR WARNINGS
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
+const CustomCheckbox = ({ checked }: { checked: boolean }) => (
+  <div className={`w-4 h-4 rounded-[4px] flex items-center justify-center shrink-0 transition-colors ${checked ? 'bg-[#0a66c2] border-transparent text-white shadow-sm' : 'border-[1.5px] border-slate-300 dark:border-slate-600 bg-transparent'}`}>
+    {checked && <Check size={12} strokeWidth={4} />}
+  </div>
+);
 
 function XJobsContent() {
   const searchParams = useSearchParams();
@@ -308,61 +358,85 @@ function XJobsContent() {
   const pathname = usePathname();
   const { data: session, status } = useSession(); 
   
-  const [jobs, setJobs] = useState<any[]>([]); 
-
-  const [loading, setLoading] = useState(true);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  const [jobs, setJobs] = useState<any[]>(() => {
+      if (typeof window !== 'undefined') {
+          try {
+              const cached = sessionStorage.getItem('xjobs_data_cache_v1');
+              if (cached) return JSON.parse(cached);
+          } catch(e) {}
+      }
+      return [];
+  }); 
+  const [loading, setLoading] = useState(() => jobs.length === 0);
   
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [activeMainFilter, setActiveMainFilter] = useState(searchParams.get('main') || "job"); 
-  const [activeSubFilter, setActiveSubFilter] = useState(searchParams.get('sub') || "all"); 
+  const [activeSubFilters, setActiveSubFilters] = useState<string[]>(searchParams.get('sub')?.split(',').filter(Boolean) || []); 
+  const [activeCountries, setActiveCountries] = useState<string[]>(searchParams.get('country')?.split(',').filter(Boolean) || []); 
+  const [activeWorkModes, setActiveWorkModes] = useState<string[]>(searchParams.get('mode')?.split(',').filter(Boolean) || []); 
+  const [isSpotlightOnly, setIsSpotlightOnly] = useState(searchParams.get('spotlight') === 'true');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || ""); 
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
-  
+
+  const [isWorkModeExpanded, setIsWorkModeExpanded] = useState(false);
+  const [isLocationExpanded, setIsLocationExpanded] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
 
   const [showTour, setShowTour] = useState(false);
-  const viewedJobs = useRef<Set<string>>(new Set());
   const jobsHeadingRef = useRef<HTMLDivElement>(null);
 
-  // =========================================================
-  // 🔥 FIX: 0-MILLISECOND FLASH SCROLL (SYNC LAYOUT EFFECT)
-  // =========================================================
-  useIsomorphicLayoutEffect(() => {
-    if (typeof window !== 'undefined') {
-      if ('scrollRestoration' in window.history) {
-        window.history.scrollRestoration = 'manual';
-      }
-      // Paint hone se pehle seedha jump karega!
-      if (jobsHeadingRef.current) {
-        const yOffset = -120;
-        const elementY = jobsHeadingRef.current.getBoundingClientRect().top + window.scrollY + yOffset;
-        window.scrollTo({ top: elementY, behavior: 'auto' });
-      }
-    }
-  }, []); // Only run once exactly when component mounts
-
-  // 🔥 Smooth Scroll for Pagination & Filters ONLY
-  const isInitialMount = useRef(true);
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
+    setActiveMainFilter(searchParams.get('main') || "job");
+    setActiveSubFilters(searchParams.get('sub')?.split(',').filter(Boolean) || []);
+    setActiveCountries(searchParams.get('country')?.split(',').filter(Boolean) || []);
+    setActiveWorkModes(searchParams.get('mode')?.split(',').filter(Boolean) || []);
+    setIsSpotlightOnly(searchParams.get('spotlight') === 'true');
+    setSearchQuery(searchParams.get('search') || "");
+    setCurrentPage(Number(searchParams.get('page')) || 1);
+  }, [searchParams]);
+
+  useIsomorphicLayoutEffect(() => {
+      setIsMounted(true);
+  }, []);
+
+  useIsomorphicLayoutEffect(() => {
+    if (isMounted && !loading && typeof window !== 'undefined') {
+      if (sessionStorage.getItem('scroll_to_feed') === 'true') {
+        
+        const snapAggressively = () => {
+          if (jobsHeadingRef.current) {
+            const yOffset = -120;
+            const elementY = jobsHeadingRef.current.getBoundingClientRect().top + window.scrollY + yOffset;
+            window.scrollTo({ top: elementY, left: 0, behavior: 'auto' }); 
+          }
+        };
+
+        snapAggressively();
+        
+        requestAnimationFrame(() => {
+          snapAggressively();
+          setTimeout(() => {
+            snapAggressively();
+            sessionStorage.removeItem('scroll_to_feed');
+          }, 10);
+        });
+      }
     }
-    if (!loading && jobsHeadingRef.current) {
-      const yOffset = -120;
-      const elementY = jobsHeadingRef.current.getBoundingClientRect().top + window.scrollY + yOffset;
-      window.scrollTo({ top: elementY, behavior: 'smooth' });
-    }
-  }, [currentPage, activeMainFilter, activeSubFilter]);
-  // =========================================================
+  }, [isMounted, loading]);
+
+  const scrollToFeed = useCallback((instant = false) => {
+      if (jobsHeadingRef.current) {
+          const yOffset = -120;
+          const elementY = jobsHeadingRef.current.getBoundingClientRect().top + window.scrollY + yOffset;
+          window.scrollTo({ top: elementY, behavior: instant ? 'auto' : 'smooth' });
+      }
+  }, []);
 
   useEffect(() => {
     if (status === 'loading') return;
-    if (status === 'unauthenticated') {
-          sessionStorage.removeItem('tour_seen_v8');
-    }
+    if (status === 'unauthenticated') sessionStorage.removeItem('tour_seen_v8');
     if (status === 'authenticated') {
         const hasSeen = sessionStorage.getItem('tour_seen_v8');
         if (!hasSeen) setTimeout(() => setShowTour(true), 1500); 
@@ -376,13 +450,11 @@ function XJobsContent() {
 
   const handleJobClick = (jobId: string) => {
     setActiveId(jobId);
-    // ❌ API call removed (Duplicate count fix)
   };
 
   const handleApplyClick = (e: React.MouseEvent, jobId: string, url: string) => {
     e.stopPropagation(); 
     handleJobClick(jobId);
-    // ❌ API call removed 
   };
 
   const updateUrl = useCallback((updates: Record<string, string>) => {
@@ -398,6 +470,7 @@ function XJobsContent() {
     setSearchQuery(val);
     setCurrentPage(1);
     updateUrl({ search: val, page: '1' });
+    scrollToFeed();
   };
 
   useEffect(() => {
@@ -407,8 +480,8 @@ function XJobsContent() {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
-  const fetchJobs = () => {
-    setLoading(true);
+  const fetchJobs = useCallback((hasCache = false) => {
+    if (!hasCache) setLoading(true);
     fetch(`/api/jobs?limit=10000&t=${Date.now()}`) 
       .then(res => res.json())
       .then(data => {
@@ -421,18 +494,105 @@ function XJobsContent() {
                return 0; 
             });
             setJobs(sortedJobs);
+            setLoading(false);
+            try { sessionStorage.setItem('xjobs_data_cache_v1', JSON.stringify(sortedJobs)); } catch(e){}
+         } else {
+             setLoading(false);
          }
-         setLoading(false);
       })
       .catch(err => {
         console.error(err);
         setLoading(false);
       });
-  };
+  }, []);
 
   useEffect(() => {
-    fetchJobs();
+    if (isMounted) {
+       let hasCache = false;
+       try {
+           const cached = sessionStorage.getItem('xjobs_data_cache_v1');
+           if (cached) {
+               const parsed = JSON.parse(cached);
+               if (parsed && parsed.length > 0) hasCache = true;
+           }
+       } catch(e) {}
+
+       const timer = setTimeout(() => {
+           fetchJobs(hasCache);
+       }, 50);
+
+       return () => clearTimeout(timer);
+    }
+  }, [isMounted, fetchJobs]);
+
+  const getLocation = useCallback((job: any) => {
+      if (!job) return "Other";
+      const genericRegex = /^(global|anywhere|remote|wfh|any|unspecified)$/i;
+      
+      const scanTextForCountry = (txt: string) => {
+          if (!txt) return null;
+          const lowerTxt = txt.toLowerCase();
+
+          const domainMatch = lowerTxt.match(/\.([a-z]{2})\b/);
+          if (domainMatch && DOMAINS_MAP[domainMatch[1]]) return DOMAINS_MAP[domainMatch[1]];
+
+          for (const code in PHONE_CODES_MAP) {
+              if (txt.includes(code)) return PHONE_CODES_MAP[code];
+          }
+          if (txt.includes('+1 ') || txt.includes('+1-') || txt.includes('+1(')) return "USA";
+
+          const cleanTxt = lowerTxt
+              .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/gi, '')
+              .replace(/https?:\/\/[^\s]+/gi, '');
+
+          for (const { country, regex } of PRECOMPILED_COUNTRY_REGEXES) {
+              if (regex.test(cleanTxt)) {
+                  return country;
+              }
+          }
+          
+          return null;
+      };
+
+      const dbCountry = job.country ? job.country.trim() : "";
+      if (dbCountry && !genericRegex.test(dbCountry)) {
+          const mapped = scanTextForCountry(dbCountry);
+          if (mapped) return mapped;
+          return dbCountry.charAt(0).toUpperCase() + dbCountry.slice(1).toLowerCase();
+      }
+
+      const dbCity = job.job_city ? job.job_city.trim() : "";
+      if (dbCity && !genericRegex.test(dbCity)) {
+          const mapped = scanTextForCountry(dbCity);
+          if (mapped) return mapped;
+          return dbCity.charAt(0).toUpperCase() + dbCity.slice(1).toLowerCase();
+      }
+
+      const fullText = (job.text + " " + (job.job_title || "")).toLowerCase();
+      const textMatch = scanTextForCountry(fullText);
+      if (textMatch) return textMatch;
+
+      return "Other"; 
   }, []);
+
+  const getWorkMode = useCallback((job: any) => {
+      const txt = (job.text + " " + (job.job_title || "") + " " + (job.work_mode || "")).toLowerCase();
+      if(txt.match(/\b(remote|wfh|work from home|telecommute|anywhere)\b/)) return "Remote";
+      if(txt.match(/\b(hybrid)\b/)) return "Hybrid";
+      if(txt.match(/\b(onsite|on-site|in-office|in office|office)\b/)) return "Onsite";
+      return "Unspecified";
+  }, []);
+
+  const uniqueCountries = useMemo(() => {
+      const locations = new Set<string>();
+      jobs.forEach(job => {
+          const loc = getLocation(job);
+          if (loc && loc !== 'Other') {
+              locations.add(loc);
+          }
+      });
+      return [...Array.from(locations).sort(), "Other"];
+  }, [jobs, getLocation]);
 
   const filteredJobs = useMemo(() => {
     let result = jobs;
@@ -451,6 +611,10 @@ function XJobsContent() {
     const getJobText = (job: any) => (job.text + " " + job.job_title + " " + job.category).toLowerCase();
     const internshipKeywords = ['intern', 'internship', 'trainee', 'stipend', 'training period'];
     const freelanceKeywords = ['freelance', 'contractor', 'gig', 'upwork', 'fiverr'];
+
+    if (isSpotlightOnly) {
+        result = result.filter(job => job.isSpotlight);
+    }
 
     if (activeMainFilter === 'internship') {
         result = result.filter(job => {
@@ -476,59 +640,114 @@ function XJobsContent() {
         });
     }
 
-    if (activeSubFilter !== 'all') {
+    if (activeSubFilters.length > 0) {
         result = result.filter(job => {
-            if (job.category && job.category !== 'General' && job.category !== 'job' && job.category !== 'internship') {
-                const dbCat = job.category.toLowerCase();
-                const filterCat = activeSubFilter.toLowerCase();
-                return dbCat.includes(filterCat) || filterCat.includes(dbCat);
-            }
-            const subKey = activeSubFilter.toLowerCase();
-            const keywords: Record<string, string[]> = {
-                'software': ['software', 'developer', 'engineer', 'java', 'python', 'react', 'node', 'frontend', 'backend', 'full stack', 'data scientist', 'ai', 'cloud', 'devops'],
-                'finance': ['finance', 'accountant', 'accounting', 'audit', 'tax', 'treasury', 'banking', 'investment', 'credit analyst', 'cfo'],
-                'management': ['manager', 'management', 'business analyst', 'project manager', 'product manager', 'consultant', 'strategy', 'operations', 'executive'],
-                'hr': ['hr', 'human resources', 'recruiter', 'talent', 'hiring', 'payroll', 'learning', 'compensation'],
-                'marketing': ['marketing', 'sales', 'brand', 'content', 'seo', 'social media', 'growth', 'advertising', 'pr', 'digital marketing'],
-                'esg': ['esg', 'sustainability', 'climate', 'carbon', 'environment', 'green', 'energy', 'csr', 'net zero'],
-                'commerce': ['e-commerce', 'ecommerce', 'shopify', 'marketplace', 'amazon', 'logistics', 'supply chain'],
-                'design': ['design', 'designer', 'ui', 'ux', 'graphic', 'creative', 'architect', 'interior', 'visual'],
-                'research': ['research', 'analyst', 'data analyst', 'economist', 'scientist', 'policy', 'market research'],
-                'other': ['admin', 'support', 'customer service', 'legal', 'compliance', 'office', 'assistant']
-            };
-            const targetWords = keywords[subKey] || [subKey];
-            return targetWords.some(word => getJobText(job).includes(word));
+            const dbCat = (job.category || "").toLowerCase();
+            const textToScan = (job.text + " " + (job.job_title || "")).toLowerCase();
+            
+            const cleanText = textToScan
+                .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi, '')
+                .replace(/https?:\/\/[^\s]+/gi, '');
+
+            return activeSubFilters.some(subKey => {
+                const s = subKey.toLowerCase();
+                let regex: RegExp;
+
+                switch (s) {
+                    case 'software': regex = /\b(software|it|developer|engineer|java|python|react|node|frontend|backend|full stack|data scientist|ai|cloud|devops)\b/i; break;
+                    case 'finance': regex = /\b(finance|accountant|accounting|audit|taxation|treasury|banking|investment|cfa|ca|cpa|bookkeeper)\b/i;
+                    const hasCurrencyOnly = /\b(inr|usd|gbp|eur|salary|stipend)\b/i.test(cleanText);
+                    const hasCoreFinanceRole = /\b(accountant|audit|tax|banking|cfa|treasury)\b/i.test(cleanText);
+                    if (hasCurrencyOnly && !hasCoreFinanceRole && !/\bfinance\b/i.test(cleanText)) {
+                        return false;
+                    }
+                    break;
+                    case 'management': regex = /\b(manager|management|business analyst|project manager|product manager|consultant|strategy|operations|executive)\b/i; break;
+                    case 'hr': regex = /\b(hr|human resources|recruiter|talent acquisition|hiring manager)\b/i;
+                    const isSalaryHr = /\d+\s*\/hr|\d+\s*\/hour/i.test(cleanText);
+                    if (isSalaryHr && !/\b(human resources|recruiter)\b/i.test(cleanText)) {
+                        return false;
+                    }
+                    break;
+                    case 'marketing': regex = /\b(marketing|sales|brand|content|seo|social media|growth|advertising|pr|digital marketing)\b/i; break;
+                    case 'esg': regex = /\b(esg|sustainability|climate|carbon|environment|green|energy|csr|net zero)\b/i; break;
+                    case 'commerce': regex = /\b(e-commerce|ecommerce|shopify|marketplace|amazon|logistics|supply chain)\b/i; break;
+                    case 'design': regex = /\b(design|designer|ui|ux|graphic|creative|architect|interior|visual|graphics)\b/i; break;
+                    case 'research': regex = /\b(research|analyst|data analyst|economist|scientist|policy|market research)\b/i; break;
+                    case 'other': regex = /\b(admin|support|customer service|legal|compliance|office|assistant)\b/i; break;
+                    default: regex = new RegExp(`\\b${s}\\b`, 'i');
+                }
+
+                const isStrongDbCat = dbCat && !['general', 'job', 'internship', 'other', 'unspecified'].includes(dbCat);
+
+                if (isStrongDbCat) {
+                    if (regex.test(dbCat) || dbCat.includes(s) || s.includes(dbCat)) return true;
+                    return false; 
+                }
+
+                return regex.test(cleanText);
+            });
         });
     }
 
-    return result;
-  }, [searchQuery, jobs, activeMainFilter, activeSubFilter]);
+    if (activeCountries.length > 0) {
+        result = result.filter(job => activeCountries.includes(getLocation(job)));
+    }
 
-  const toggleExpand = (e: React.MouseEvent, id: string) => {
-    e.preventDefault(); 
-    e.stopPropagation(); 
-    setExpandedId(expandedId === id ? null : id);
+    if (activeWorkModes.length > 0) {
+        result = result.filter(job => activeWorkModes.includes(getWorkMode(job)));
+    }
+
+    return result;
+  }, [searchQuery, jobs, activeMainFilter, activeSubFilters, activeCountries, activeWorkModes, isSpotlightOnly, getLocation, getWorkMode]);
+
+  const toggleArraySelection = (currentArray: string[], setter: React.Dispatch<React.SetStateAction<string[]>>, val: string, paramKey: string) => {
+      let next: string[]; 
+      if (val === 'all') {
+          next = [];
+      } else {
+          if (currentArray.includes(val)) next = currentArray.filter(item => item !== val);
+          else next = [...currentArray, val];
+      }
+      
+      setter(next);
+      setCurrentPage(1);
+      updateUrl({ [paramKey]: next.join(','), page: '1' });
+      scrollToFeed();
+  };
+
+  const handleCountryToggle = (val: string) => toggleArraySelection(activeCountries, setActiveCountries, val, 'country');
+  const handleWorkModeToggle = (val: string) => toggleArraySelection(activeWorkModes, setActiveWorkModes, val, 'mode');
+  const handleSubFilterToggle = (val: string) => toggleArraySelection(activeSubFilters, setActiveSubFilters, val, 'sub');
+
+  const handleSpotlightToggle = () => {
+    const newVal = !isSpotlightOnly;
+    setIsSpotlightOnly(newVal);
+    setCurrentPage(1);
+    updateUrl({ spotlight: newVal ? 'true' : '', page: '1' });
+    scrollToFeed();
   };
 
   const handleMainFilterClick = (id: string) => {
     setActiveMainFilter(id);
-    setActiveSubFilter('all'); 
+    setActiveSubFilters([]); 
     setCurrentPage(1);
-    updateUrl({ main: id, sub: 'all', page: '1' });
+    updateUrl({ main: id, sub: '', page: '1' });
+    scrollToFeed();
   };
 
-  const handleSubFilterClick = (id: string) => {
-    setActiveSubFilter(id);
-    setCurrentPage(1);
-    updateUrl({ sub: id, page: '1' });
+  const resetAllFilters = () => {
+    setActiveMainFilter("job"); 
+    setActiveSubFilters([]); 
+    setActiveCountries([]);
+    setActiveWorkModes([]);
+    setIsSpotlightOnly(false);
+    searchParams.get('search') ? updateUrl({ main: 'job', sub: '', country: '', mode: '', spotlight: '', page: '1' }) : updateUrl({ main: 'job', sub: '', country: '', mode: '', spotlight: '', search: '', page: '1' });
+    scrollToFeed();
   };
 
-  // 🔥 LOGIN WALL LOGIC 🔥
-  // Check if user is logged out (and not loading)
   const showLoginWall = status === 'unauthenticated';
   
-  // If Wall is active, show only top 6 jobs from the entire list.
-  // Otherwise, use standard pagination logic.
   const jobsToRender = showLoginWall 
       ? filteredJobs.slice(0, 6) 
       : filteredJobs.slice((currentPage - 1) * ITEMS_PER_PAGE, (currentPage - 1) * ITEMS_PER_PAGE + ITEMS_PER_PAGE);
@@ -536,17 +755,29 @@ function XJobsContent() {
   const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
 
   const goToNextPage = () => { 
-      if (currentPage < totalPages) {
-          setCurrentPage(curr => curr + 1); 
-          updateUrl({ page: String(currentPage + 1) });
-      }
-  };
-  const goToPrevPage = () => { 
-      if (currentPage > 1) {
-          setCurrentPage(curr => curr - 1); 
-          updateUrl({ page: String(currentPage - 1) });
-      }
-  };
+    if (currentPage < totalPages) {
+        const nextPage = currentPage + 1;
+        setCurrentPage(nextPage);
+        updateUrl({ page: String(nextPage) });
+
+        // wait for DOM update then smooth scroll
+        setTimeout(() => {
+            scrollToFeed(false); // smooth
+        }, 50);
+    }
+};
+
+const goToPrevPage = () => { 
+    if (currentPage > 1) {
+        const prevPage = currentPage - 1;
+        setCurrentPage(prevPage);
+        updateUrl({ page: String(prevPage) });
+
+        setTimeout(() => {
+            scrollToFeed(false); // smooth
+        }, 50);
+    }
+};
 
   return (
     <>
@@ -570,46 +801,119 @@ function XJobsContent() {
               <div className="bg-white dark:bg-[#112240] rounded-xl border border-gray-200 dark:border-white/5 shadow-sm sticky top-24 overflow-hidden">
                   <div className="p-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center bg-gray-50 dark:bg-white/5">
                       <h3 className="font-bold text-base flex items-center gap-2"><Filter size={16} /> Filters</h3>
-                      <span className="text-xs text-blue-600 cursor-pointer hover:underline" onClick={() => { setActiveMainFilter("job"); setActiveSubFilter("all"); setSearchQuery(""); updateUrl({ main: 'job', sub: 'all', search: '', page: '1' }); }}>Reset</span>
+                      <button onClick={resetAllFilters} className="text-xs text-blue-600 cursor-pointer hover:underline focus:outline-none">Reset</button>
                   </div>
+                  
                   <div className="p-4 space-y-2">
-                    {MAIN_FILTERS.map((main) => {
-                        const isActive = activeMainFilter === main.id;
-                        return (
-                            <div key={main.id} className="rounded-lg overflow-hidden">
-                                <button 
-                                    onClick={() => handleMainFilterClick(main.id)}
-                                    className={`w-full flex items-center justify-between p-3 text-sm font-medium transition-colors rounded-lg ${isActive ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
-                                >
-                                    {main.label}
-                                    {isActive && main.hasSub ? <ChevronUp size={16} /> : (main.hasSub ? <ChevronDown size={16} className="opacity-50" /> : null)}
-                                </button>
+                    
+                    <label className="flex items-center gap-3 p-3 mb-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl cursor-pointer border border-emerald-100 dark:border-emerald-800/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/20 transition-colors group">
+                        <div className="relative flex items-center justify-center w-4 h-4">
+                            <input type="checkbox" checked={isSpotlightOnly} onChange={handleSpotlightToggle} className="peer appearance-none w-4 h-4 border-[1.5px] border-emerald-400 dark:border-emerald-600 rounded bg-white dark:bg-black/20 checked:bg-emerald-500 checked:border-emerald-500 transition-all cursor-pointer" />
+                            <Check size={12} strokeWidth={4} className="text-white absolute pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
+                        </div>
+                        <span className="text-sm font-extrabold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                            <Zap size={16} className="fill-emerald-500 text-emerald-500" /> Spotlight Jobs
+                        </span>
+                    </label>
 
-                                <AnimatePresence>
-                                    {isActive && main.hasSub && (
-                                        <motion.div 
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: "auto", opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            className="overflow-hidden"
-                                        >
-                                            <div className="pl-4 pr-2 py-2 space-y-1 border-l-2 border-blue-100 dark:border-white/10 ml-4 mt-1">
-                                                {SUB_CATEGORIES.map((sub) => (
-                                                    <button
-                                                        key={sub.value}
-                                                        onClick={() => handleSubFilterClick(sub.value)}
-                                                        className={`w-full text-left px-3 py-1.5 text-xs rounded-md transition-all ${activeSubFilter === sub.value ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}
-                                                    >
-                                                        {sub.name}
+                    <div className="h-px w-full bg-gray-100 dark:bg-white/5 mb-4"></div>
+
+                    <div className="rounded-lg overflow-hidden mb-2">
+                        <button 
+                            onClick={() => setIsWorkModeExpanded(!isWorkModeExpanded)}
+                            className={`w-full flex items-center justify-between p-3 text-sm font-medium transition-colors rounded-lg ${activeWorkModes.length > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                        >
+                            Work Mode {activeWorkModes.length > 0 && <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-800/50 rounded-md">{activeWorkModes.length}</span>}
+                            {isWorkModeExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} className="opacity-50" />}
+                        </button>
+                        <AnimatePresence>
+                            {isWorkModeExpanded && (
+                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                    <div className="pl-4 pr-2 py-2 space-y-1 border-l-2 border-blue-100 dark:border-white/10 ml-4 mt-1">
+                                        <button onClick={() => handleWorkModeToggle('all')} className={`w-full text-left px-3 py-2 text-xs rounded-md transition-all flex items-center gap-3 ${activeWorkModes.length === 0 ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}>
+                                            <CustomCheckbox checked={activeWorkModes.length === 0} /> All Modes
+                                        </button>
+                                        {['Remote', 'Hybrid', 'Onsite'].map(mode => (
+                                            <button key={mode} onClick={() => handleWorkModeToggle(mode)} className={`w-full text-left px-3 py-2 text-xs rounded-md transition-all flex items-center gap-3 ${activeWorkModes.includes(mode) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}>
+                                                <CustomCheckbox checked={activeWorkModes.includes(mode)} /> {mode}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    <div className="rounded-lg overflow-hidden mb-2">
+                        <button 
+                            onClick={() => setIsLocationExpanded(!isLocationExpanded)}
+                            className={`w-full flex items-center justify-between p-3 text-sm font-medium transition-colors rounded-lg ${activeCountries.length > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                        >
+                            Location {activeCountries.length > 0 && <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-800/50 rounded-md">{activeCountries.length}</span>}
+                            {isLocationExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} className="opacity-50" />}
+                        </button>
+                        <AnimatePresence>
+                            {isLocationExpanded && (
+                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                    <div className="pl-4 pr-2 py-2 space-y-1 border-l-2 border-blue-100 dark:border-white/10 ml-4 mt-1 max-h-48 overflow-y-auto custom-scrollbar">
+                                        <button onClick={() => handleCountryToggle('all')} className={`w-full text-left px-3 py-2 text-xs rounded-md transition-all flex items-center gap-3 ${activeCountries.length === 0 ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}>
+                                            <CustomCheckbox checked={activeCountries.length === 0} /> All Locations
+                                        </button>
+                                        {uniqueCountries.map(loc => (
+                                            <button key={loc} onClick={() => handleCountryToggle(loc)} className={`w-full text-left px-3 py-2 text-xs rounded-md transition-all flex items-center gap-3 ${activeCountries.includes(loc) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}>
+                                                <CustomCheckbox checked={activeCountries.includes(loc)} /> <span className="truncate">{loc}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    <div className="h-px w-full bg-gray-100 dark:bg-white/5 my-4"></div>
+
+                    <div className="space-y-2">
+                        {MAIN_FILTERS.map((main) => {
+                            const isActive = activeMainFilter === main.id;
+                            return (
+                                <div key={main.id} className="rounded-lg overflow-hidden">
+                                    <button 
+                                        onClick={() => handleMainFilterClick(main.id)}
+                                        className={`w-full flex items-center justify-between p-3 text-sm font-medium transition-colors rounded-lg ${isActive ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                                    >
+                                        {main.label}
+                                        {isActive && main.hasSub ? <ChevronUp size={16} /> : (main.hasSub ? <ChevronDown size={16} className="opacity-50" /> : null)}
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {isActive && main.hasSub && (
+                                            <motion.div 
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: "auto", opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="pl-4 pr-2 py-2 space-y-1 border-l-2 border-blue-100 dark:border-white/10 ml-4 mt-1">
+                                                    <button onClick={() => handleSubFilterToggle('all')} className={`w-full text-left px-3 py-2 text-xs rounded-md transition-all flex items-center gap-3 ${activeSubFilters.length === 0 ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}>
+                                                        <CustomCheckbox checked={activeSubFilters.length === 0} /> All Categories
                                                     </button>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        );
-                    })}
+                                                    {SUB_CATEGORIES.map((sub) => (
+                                                        <button
+                                                            key={sub.value}
+                                                            onClick={() => handleSubFilterToggle(sub.value)}
+                                                            className={`w-full text-left px-3 py-2 text-xs rounded-md transition-all flex items-center gap-3 ${activeSubFilters.includes(sub.value) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}
+                                                        >
+                                                            <CustomCheckbox checked={activeSubFilters.includes(sub.value)} /> <span className="truncate">{sub.name}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            );
+                        })}
+                    </div>
                   </div>
               </div>
             </aside>
@@ -621,21 +925,20 @@ function XJobsContent() {
                   className="lg:hidden w-full mb-6 flex items-center justify-center gap-2 bg-white dark:bg-[#112240] border border-gray-200 dark:border-white/10 p-4 rounded-xl font-bold text-slate-700 dark:text-white hover:bg-gray-50 transition-colors shadow-sm"
                >
                   <Filter size={20} className="text-black dark:text-white" /> 
-                  {activeMainFilter.toUpperCase()} {activeSubFilter !== 'all' && `> ${activeSubFilter}`}
+                  Filters {(activeCountries.length > 0 || activeWorkModes.length > 0 || activeSubFilters.length > 0 || isSpotlightOnly) && <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-black">Active</span>}
                </button>
 
-               {/* 🔥 REF ASSIGNED HERE */}
                <div ref={jobsHeadingRef} className="flex items-center justify-between mb-6 pt-2">
                   <h1 className="text-2xl font-bold flex items-center gap-2 uppercase tracking-tight">
                     <XLogo className="w-6 h-6 text-black dark:text-white" /> 
                     {searchQuery ? `Results: "${searchQuery}"` : `${activeMainFilter} Feed`}
                   </h1>
                   <p className="text-slate-500 dark:text-gray-400 text-sm">
-                    {loading ? "Scanning..." : `${filteredJobs.length} posts found`}
+                    {(!isMounted || loading) ? "Scanning..." : `${filteredJobs.length} posts found`}
                   </p>
                </div>
 
-               {loading ? (
+               {(!isMounted || loading) ? (
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                    {[1,2,3,4,5,6,7,8,9].map(i => <div key={i} className="h-64 bg-gray-200 dark:bg-[#112240] rounded-xl animate-pulse"></div>)}
                  </div>
@@ -644,16 +947,18 @@ function XJobsContent() {
                    {filteredJobs.length === 0 ? (
                        <div className="text-center py-20">
                            <p className="text-slate-500 text-lg">No jobs found matching your filters.</p>
-                           <button onClick={() => {setSearchQuery(""); setActiveSubFilter("all"); updateUrl({ search: '', sub: 'all' }); }} className="mt-4 text-blue-600 font-bold hover:underline">Clear Filters</button>
+                           <button onClick={resetAllFilters} className="mt-4 text-blue-600 font-bold hover:underline">Clear Filters</button>
                        </div>
                    ) : (
                    <div className="relative">
                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
                           {jobsToRender.map((job, index) => {
                               const isActive = activeId === job.job_id;
-                              const isExpanded = expandedId === job.job_id;
                               const isSpotlight = !!job.isSpotlight;
                               const tourId = index === 0 ? 'tour-feed-start' : (isSpotlight ? 'tour-spotlight' : undefined);
+                              
+                              const displayLocation = getLocation(job);
+                              const displayMode = getWorkMode(job);
 
                               return (
                                 <motion.div 
@@ -676,7 +981,7 @@ function XJobsContent() {
                                   onClick={() => {
                                     sessionStorage.setItem('instant_job_data', JSON.stringify(job));
                                     handleJobClick(job.job_id);
-                                    router.push(`/x-jobs/${job.job_id}`);
+                                    router.push(`/x-jobs/${job.job_id}`, { scroll: true });
                                   }}
                                   
                                   animate={isActive ? { 
@@ -731,15 +1036,25 @@ function XJobsContent() {
                                   
                                   <div className="flex flex-wrap gap-2 mb-4">
                                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wide ${isSpotlight ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200' : 'bg-gray-100 dark:bg-white/5 text-slate-500 dark:text-gray-400'}`}>
-                                      <MapPin size={10} /> {job.work_mode || "Remote"} / {job.country || "Global"}
+                                      <MapPin size={10} /> 
+                                      {displayMode !== 'Unspecified' && <span className="text-blue-600 dark:text-blue-400">{displayMode} • </span>} 
+                                      {displayLocation}
                                     </span>
                                   </div>
                                   
                                   <div className="text-xs text-slate-500 dark:text-gray-400 mb-4 relative">
-                                    <p className={isExpanded ? "whitespace-pre-wrap" : "line-clamp-3"}>{job.text}</p>
+                                    <p className="line-clamp-3 whitespace-pre-wrap">{job.text}</p>
                                     {job.text && job.text.length > 100 && (
-                                      <button onClick={(e) => toggleExpand(e, job.job_id)} className="text-[#0a66c2] font-bold mt-1 hover:underline focus:outline-none">
-                                        {isExpanded ? "Show less" : "Read thread..."}
+                                      <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            sessionStorage.setItem('instant_job_data', JSON.stringify(job));
+                                            handleJobClick(job.job_id);
+                                            router.push(`/x-jobs/${job.job_id}`, { scroll: true });
+                                        }} 
+                                        className="text-[#0a66c2] font-bold mt-1 hover:underline focus:outline-none"
+                                      >
+                                        Read thread...
                                       </button>
                                     )}
                                   </div>
@@ -754,11 +1069,11 @@ function XJobsContent() {
                                               e.stopPropagation(); 
                                               handleApplyClick(e, job.job_id, job.apply_link);
                                               sessionStorage.setItem('instant_job_data', JSON.stringify(job));
-                                              router.push(`/x-jobs/${job.job_id}`);
+                                              router.push(`/x-jobs/${job.job_id}`, { scroll: true });
                                           }}
                                           className={`${isSpotlight ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-[#0A192F] dark:bg-white text-white dark:text-[#0A192F]'} px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1 shadow-sm`}
                                       >
-                                            Apply Direct <ArrowRight size={12} />
+                                          Apply Direct <ArrowRight size={12} />
                                       </button>
                                   </div>
                                 </motion.div>
@@ -766,7 +1081,6 @@ function XJobsContent() {
                           })}
                        </div>
 
-                        {/* 🔥 LOGIN WALL RENDER 🔥 */}
                         {showLoginWall && (
                             <div className="relative mt-8">
                                 <div className="absolute -top-32 left-0 w-full h-40 bg-gradient-to-b from-transparent to-[#f8f9fa] dark:to-[#0A192F] pointer-events-none z-10"></div>
@@ -776,7 +1090,6 @@ function XJobsContent() {
                    </div>
                    )}
 
-                   {/* Hide pagination if Wall is shown */}
                    {!showLoginWall && filteredJobs.length > ITEMS_PER_PAGE && (
                      <div className="flex justify-center items-center gap-4 mt-10">
                         <button onClick={goToPrevPage} disabled={currentPage === 1} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-[#112240] border border-gray-200 dark:border-white/10 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 font-medium text-sm"><ChevronLeft size={16} /> Previous</button>
@@ -796,46 +1109,121 @@ function XJobsContent() {
                 <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "tween", duration: 0.3 }} className="fixed right-0 top-0 bottom-0 w-[85%] max-w-sm bg-white dark:bg-[#0A192F] z-[70] shadow-2xl lg:hidden flex flex-col">
                    <div className="p-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center bg-gray-50 dark:bg-white/5">
                       <h3 className="font-bold text-lg uppercase tracking-tighter">Filter Jobs</h3>
-                      <button onClick={() => setIsFilterOpen(false)} className="p-2 bg-gray-200 dark:bg-white/10 rounded-full"><X size={20} /></button>
+                      <button onClick={resetAllFilters} className="text-xs text-blue-600 cursor-pointer hover:underline focus:outline-none">Reset</button>
                    </div>
-                   <div className="p-6 overflow-y-auto flex-1">
-                      {MAIN_FILTERS.map((main) => {
-                          const isActive = activeMainFilter === main.id;
-                          return (
-                            <div key={main.id} className="mb-4">
-                                <button 
-                                    onClick={() => handleMainFilterClick(main.id)}
-                                    className={`w-full flex items-center justify-between p-4 text-base font-bold rounded-xl transition-all ${isActive ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-white/5 text-slate-700 dark:text-white'}`}
-                                >
-                                    {main.label}
-                                    {isActive && main.hasSub ? <ChevronUp size={20} /> : (main.hasSub ? <ChevronDown size={20} /> : null)}
-                                </button>
-                                
-                                <AnimatePresence>
-                                    {isActive && main.hasSub && (
-                                        <motion.div 
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: "auto", opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            className="overflow-hidden"
-                                        >
-                                            <div className="mt-2 ml-4 space-y-2 border-l-2 border-gray-200 dark:border-white/10 pl-4">
-                                                {SUB_CATEGORIES.map((sub) => (
-                                                    <button
-                                                        key={sub.value}
-                                                        onClick={() => { handleSubFilterClick(sub.value); setIsFilterOpen(false); }}
-                                                        className={`block w-full text-left py-2 px-3 rounded-lg text-sm ${activeSubFilter === sub.value ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}
-                                                    >
-                                                        {sub.name}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                          );
-                      })}
+                   <div className="p-6 overflow-y-auto flex-1 space-y-4">
+                      
+                      <label className="flex items-center gap-3 p-4 mb-2 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl cursor-pointer border border-emerald-100 dark:border-emerald-800/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/20 transition-colors group">
+                          <div className="relative flex items-center justify-center w-5 h-5">
+                              <input type="checkbox" checked={isSpotlightOnly} onChange={handleSpotlightToggle} className="peer appearance-none w-5 h-5 border-[1.5px] border-emerald-400 dark:border-emerald-600 rounded bg-white dark:bg-black/20 checked:bg-emerald-500 checked:border-emerald-500 transition-all cursor-pointer" />
+                              <Check size={14} strokeWidth={4} className="text-white absolute pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
+                          </div>
+                          <span className="text-base font-extrabold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                              <Zap size={18} className="fill-emerald-500 text-emerald-500" /> Spotlight Jobs
+                          </span>
+                      </label>
+
+                      <div className="h-px w-full bg-gray-100 dark:bg-white/5"></div>
+
+                      <div className="mb-2">
+                          <button 
+                              onClick={() => setIsWorkModeExpanded(!isWorkModeExpanded)}
+                              className={`w-full flex items-center justify-between p-4 text-base font-bold rounded-xl transition-all ${activeWorkModes.length > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-white/5 text-slate-700 dark:text-white'}`}
+                          >
+                              Work Mode {activeWorkModes.length > 0 && <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-800/50 rounded-md">{activeWorkModes.length}</span>}
+                              {isWorkModeExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                          </button>
+                          <AnimatePresence>
+                              {isWorkModeExpanded && (
+                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                      <div className="mt-2 ml-4 space-y-2 border-l-2 border-gray-200 dark:border-white/10 pl-4">
+                                          <button onClick={() => handleWorkModeToggle('all')} className={`w-full text-left py-2 px-3 rounded-lg text-sm flex items-center gap-3 ${activeWorkModes.length === 0 ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}>
+                                            <CustomCheckbox checked={activeWorkModes.length === 0} /> All Modes
+                                          </button>
+                                          {['Remote', 'Hybrid', 'Onsite'].map(mode => (
+                                              <button key={mode} onClick={() => handleWorkModeToggle(mode)} className={`w-full text-left py-2 px-3 rounded-lg text-sm flex items-center gap-3 ${activeWorkModes.includes(mode) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}>
+                                                  <CustomCheckbox checked={activeWorkModes.includes(mode)} /> {mode}
+                                              </button>
+                                          ))}
+                                      </div>
+                                  </motion.div>
+                              )}
+                          </AnimatePresence>
+                      </div>
+
+                      <div className="mb-2">
+                          <button 
+                              onClick={() => setIsLocationExpanded(!isLocationExpanded)}
+                              className={`w-full flex items-center justify-between p-4 text-base font-bold rounded-xl transition-all ${activeCountries.length > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-white/5 text-slate-700 dark:text-white'}`}
+                          >
+                              Location {activeCountries.length > 0 && <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-800/50 rounded-md">{activeCountries.length}</span>}
+                              {isLocationExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                          </button>
+                          <AnimatePresence>
+                              {isLocationExpanded && (
+                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                      <div className="mt-2 ml-4 space-y-2 border-l-2 border-gray-200 dark:border-white/10 pl-4 max-h-60 overflow-y-auto custom-scrollbar">
+                                          <button onClick={() => handleCountryToggle('all')} className={`w-full text-left py-2 px-3 rounded-lg text-sm flex items-center gap-3 ${activeCountries.length === 0 ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}>
+                                              <CustomCheckbox checked={activeCountries.length === 0} /> All Locations
+                                          </button>
+                                          {uniqueCountries.map(loc => (
+                                              <button key={loc} onClick={() => handleCountryToggle(loc)} className={`w-full text-left py-2 px-3 rounded-lg text-sm flex items-center gap-3 ${activeCountries.includes(loc) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}>
+                                                  <CustomCheckbox checked={activeCountries.includes(loc)} /> {loc}
+                                              </button>
+                                          ))}
+                                      </div>
+                                  </motion.div>
+                              )}
+                          </AnimatePresence>
+                      </div>
+
+                      <div className="h-px w-full bg-gray-100 dark:bg-white/5"></div>
+
+                      <div className="space-y-2">
+                        {MAIN_FILTERS.map((main) => {
+                            const isActive = activeMainFilter === main.id;
+                            return (
+                              <div key={main.id} className="mb-2">
+                                  <button 
+                                      onClick={() => handleMainFilterClick(main.id)}
+                                      className={`w-full flex items-center justify-between p-4 text-base font-bold rounded-xl transition-all ${isActive ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-white/5 text-slate-700 dark:text-white'}`}
+                                  >
+                                      {main.label}
+                                      {isActive && main.hasSub ? <ChevronUp size={20} /> : (main.hasSub ? <ChevronDown size={20} /> : null)}
+                                  </button>
+                                  
+                                  <AnimatePresence>
+                                      {isActive && main.hasSub && (
+                                          <motion.div 
+                                              initial={{ height: 0, opacity: 0 }}
+                                              animate={{ height: "auto", opacity: 1 }}
+                                              exit={{ height: 0, opacity: 0 }}
+                                              className="overflow-hidden"
+                                          >
+                                              <div className="mt-2 ml-4 space-y-2 border-l-2 border-gray-200 dark:border-white/10 pl-4">
+                                                  <button onClick={() => handleSubFilterToggle('all')} className={`w-full text-left py-2 px-3 rounded-lg text-sm flex items-center gap-3 ${activeSubFilters.length === 0 ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}>
+                                                      <CustomCheckbox checked={activeSubFilters.length === 0} /> All Categories
+                                                  </button>
+                                                  {SUB_CATEGORIES.map((sub) => (
+                                                      <button
+                                                          key={sub.value}
+                                                          onClick={() => handleSubFilterToggle(sub.value)}
+                                                          className={`w-full text-left py-2 px-3 rounded-lg text-sm flex items-center gap-3 ${activeSubFilters.includes(sub.value) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}
+                                                      >
+                                                          <CustomCheckbox checked={activeSubFilters.includes(sub.value)} /> <span className="truncate">{sub.name}</span>
+                                                      </button>
+                                                  ))}
+                                              </div>
+                                          </motion.div>
+                                      )}
+                                  </AnimatePresence>
+                              </div>
+                            );
+                        })}
+                      </div>
+                   </div>
+                   <div className="p-4 border-t border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5">
+                      <button onClick={() => { setIsFilterOpen(false); scrollToFeed(); }} className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold py-3 rounded-xl">Apply Filters</button>
                    </div>
                 </motion.div>
               </>

@@ -86,27 +86,31 @@ export default function JobHero({ title, subtitle, placeholder, themeColor, onSe
           </p>
         </motion.div>
 
-        {/* 3. Sexy Glass Search Bar */}
+        {/* 3. Clean Search Bar (Glow Removed, Mobile Fixed) */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="relative group"
+          className="relative w-full max-w-2xl mx-auto"
         >
-          <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 via-blue-500 to-purple-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
+          {/* Glow div is completely removed here */}
           
-          <div className="relative flex items-center bg-white/90 dark:bg-[#112240]/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-full p-2 shadow-2xl">
-             <div className="pl-4 text-gray-400">
-               <Search size={24} />
+          <div className="relative flex items-center bg-white/90 dark:bg-[#112240]/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-full p-2 shadow-lg">
+             <div className="pl-3 sm:pl-4 shrink-0 text-gray-400">
+               <Search size={22} />
              </div>
+             
+             {/* Flex-1 and min-w-0 prevents input from pushing button out of bounds */}
              <input 
                type="text" 
                placeholder={placeholder}
-               onChange={(e) => onSearch && onSearch(e.target.value)} // 🔥 Connected input to search function
-               className="w-full bg-transparent text-lg px-4 py-3 outline-none text-slate-800 dark:text-white placeholder-gray-500 font-medium"
+               onChange={(e) => onSearch && onSearch(e.target.value)} 
+               className="flex-1 min-w-0 bg-transparent text-base sm:text-lg px-3 sm:px-4 py-2 sm:py-3 outline-none text-slate-800 dark:text-white placeholder-gray-500 font-medium"
              />
+             
+             {/* Shrink-0 prevents the button from squishing or getting cut off */}
              <button 
-                className="hidden md:block bg-slate-900 dark:bg-white text-white dark:text-[#0A192F] px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform"
+                className="shrink-0 bg-slate-900 dark:bg-white text-white dark:text-[#0A192F] px-5 sm:px-8 py-2.5 sm:py-3 rounded-full font-bold hover:scale-105 transition-transform text-sm sm:text-base"
                 style={{ backgroundColor: themeColor === '#1d9bf0' ? '#1d9bf0' : undefined }} // Override for Twitter Blue
              >
                 Search

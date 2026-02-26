@@ -73,7 +73,7 @@ export default function SupportPage() {
                                  alt="Scan QR to Pay" 
                                  width={144} // Added explicit width
                                  height={144} // Added explicit height
-                                 loading="lazy" // Lazy load for better initial performance
+                                 loading="eager" // Lazy load for better initial performance
                                  className="w-36 h-36 object-contain rounded-lg pointer-events-none"
                              />
                         </div>
