@@ -820,32 +820,6 @@ const goToPrevPage = () => {
 
                     <div className="rounded-lg overflow-hidden mb-2">
                         <button 
-                            onClick={() => setIsWorkModeExpanded(!isWorkModeExpanded)}
-                            className={`w-full flex items-center justify-between p-3 text-sm font-medium transition-colors rounded-lg ${activeWorkModes.length > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
-                        >
-                            Work Mode {activeWorkModes.length > 0 && <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-800/50 rounded-md">{activeWorkModes.length}</span>}
-                            {isWorkModeExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} className="opacity-50" />}
-                        </button>
-                        <AnimatePresence>
-                            {isWorkModeExpanded && (
-                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                                    <div className="pl-4 pr-2 py-2 space-y-1 border-l-2 border-blue-100 dark:border-white/10 ml-4 mt-1">
-                                        <button onClick={() => handleWorkModeToggle('all')} className={`w-full text-left px-3 py-2 text-xs rounded-md transition-all flex items-center gap-3 ${activeWorkModes.length === 0 ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}>
-                                            <CustomCheckbox checked={activeWorkModes.length === 0} /> All Modes
-                                        </button>
-                                        {['Remote', 'Hybrid', 'Onsite'].map(mode => (
-                                            <button key={mode} onClick={() => handleWorkModeToggle(mode)} className={`w-full text-left px-3 py-2 text-xs rounded-md transition-all flex items-center gap-3 ${activeWorkModes.includes(mode) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}>
-                                                <CustomCheckbox checked={activeWorkModes.includes(mode)} /> {mode}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                    <div className="rounded-lg overflow-hidden mb-2">
-                        <button 
                             onClick={() => setIsLocationExpanded(!isLocationExpanded)}
                             className={`w-full flex items-center justify-between p-3 text-sm font-medium transition-colors rounded-lg ${activeCountries.length > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
                         >
@@ -862,6 +836,32 @@ const goToPrevPage = () => {
                                         {uniqueCountries.map(loc => (
                                             <button key={loc} onClick={() => handleCountryToggle(loc)} className={`w-full text-left px-3 py-2 text-xs rounded-md transition-all flex items-center gap-3 ${activeCountries.includes(loc) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}>
                                                 <CustomCheckbox checked={activeCountries.includes(loc)} /> <span className="truncate">{loc}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    <div className="rounded-lg overflow-hidden mb-2">
+                        <button 
+                            onClick={() => setIsWorkModeExpanded(!isWorkModeExpanded)}
+                            className={`w-full flex items-center justify-between p-3 text-sm font-medium transition-colors rounded-lg ${activeWorkModes.length > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                        >
+                            Work Mode {activeWorkModes.length > 0 && <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-800/50 rounded-md">{activeWorkModes.length}</span>}
+                            {isWorkModeExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} className="opacity-50" />}
+                        </button>
+                        <AnimatePresence>
+                            {isWorkModeExpanded && (
+                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                    <div className="pl-4 pr-2 py-2 space-y-1 border-l-2 border-blue-100 dark:border-white/10 ml-4 mt-1">
+                                        <button onClick={() => handleWorkModeToggle('all')} className={`w-full text-left px-3 py-2 text-xs rounded-md transition-all flex items-center gap-3 ${activeWorkModes.length === 0 ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}>
+                                            <CustomCheckbox checked={activeWorkModes.length === 0} /> All Modes
+                                        </button>
+                                        {['Remote', 'Hybrid', 'Onsite'].map(mode => (
+                                            <button key={mode} onClick={() => handleWorkModeToggle(mode)} className={`w-full text-left px-3 py-2 text-xs rounded-md transition-all flex items-center gap-3 ${activeWorkModes.includes(mode) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'}`}>
+                                                <CustomCheckbox checked={activeWorkModes.includes(mode)} /> {mode}
                                             </button>
                                         ))}
                                     </div>
@@ -1127,32 +1127,6 @@ const goToPrevPage = () => {
 
                       <div className="mb-2">
                           <button 
-                              onClick={() => setIsWorkModeExpanded(!isWorkModeExpanded)}
-                              className={`w-full flex items-center justify-between p-4 text-base font-bold rounded-xl transition-all ${activeWorkModes.length > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-white/5 text-slate-700 dark:text-white'}`}
-                          >
-                              Work Mode {activeWorkModes.length > 0 && <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-800/50 rounded-md">{activeWorkModes.length}</span>}
-                              {isWorkModeExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                          </button>
-                          <AnimatePresence>
-                              {isWorkModeExpanded && (
-                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                                      <div className="mt-2 ml-4 space-y-2 border-l-2 border-gray-200 dark:border-white/10 pl-4">
-                                          <button onClick={() => handleWorkModeToggle('all')} className={`w-full text-left py-2 px-3 rounded-lg text-sm flex items-center gap-3 ${activeWorkModes.length === 0 ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}>
-                                            <CustomCheckbox checked={activeWorkModes.length === 0} /> All Modes
-                                          </button>
-                                          {['Remote', 'Hybrid', 'Onsite'].map(mode => (
-                                              <button key={mode} onClick={() => handleWorkModeToggle(mode)} className={`w-full text-left py-2 px-3 rounded-lg text-sm flex items-center gap-3 ${activeWorkModes.includes(mode) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}>
-                                                  <CustomCheckbox checked={activeWorkModes.includes(mode)} /> {mode}
-                                              </button>
-                                          ))}
-                                      </div>
-                                  </motion.div>
-                              )}
-                          </AnimatePresence>
-                      </div>
-
-                      <div className="mb-2">
-                          <button 
                               onClick={() => setIsLocationExpanded(!isLocationExpanded)}
                               className={`w-full flex items-center justify-between p-4 text-base font-bold rounded-xl transition-all ${activeCountries.length > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-white/5 text-slate-700 dark:text-white'}`}
                           >
@@ -1169,6 +1143,32 @@ const goToPrevPage = () => {
                                           {uniqueCountries.map(loc => (
                                               <button key={loc} onClick={() => handleCountryToggle(loc)} className={`w-full text-left py-2 px-3 rounded-lg text-sm flex items-center gap-3 ${activeCountries.includes(loc) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}>
                                                   <CustomCheckbox checked={activeCountries.includes(loc)} /> {loc}
+                                              </button>
+                                          ))}
+                                      </div>
+                                  </motion.div>
+                              )}
+                          </AnimatePresence>
+                      </div>
+
+                      <div className="mb-2">
+                          <button 
+                              onClick={() => setIsWorkModeExpanded(!isWorkModeExpanded)}
+                              className={`w-full flex items-center justify-between p-4 text-base font-bold rounded-xl transition-all ${activeWorkModes.length > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-white/5 text-slate-700 dark:text-white'}`}
+                          >
+                              Work Mode {activeWorkModes.length > 0 && <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-800/50 rounded-md">{activeWorkModes.length}</span>}
+                              {isWorkModeExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                          </button>
+                          <AnimatePresence>
+                              {isWorkModeExpanded && (
+                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                      <div className="mt-2 ml-4 space-y-2 border-l-2 border-gray-200 dark:border-white/10 pl-4">
+                                          <button onClick={() => handleWorkModeToggle('all')} className={`w-full text-left py-2 px-3 rounded-lg text-sm flex items-center gap-3 ${activeWorkModes.length === 0 ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}>
+                                            <CustomCheckbox checked={activeWorkModes.length === 0} /> All Modes
+                                          </button>
+                                          {['Remote', 'Hybrid', 'Onsite'].map(mode => (
+                                              <button key={mode} onClick={() => handleWorkModeToggle(mode)} className={`w-full text-left py-2 px-3 rounded-lg text-sm flex items-center gap-3 ${activeWorkModes.includes(mode) ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-600 dark:text-gray-400'}`}>
+                                                  <CustomCheckbox checked={activeWorkModes.includes(mode)} /> {mode}
                                               </button>
                                           ))}
                                       </div>

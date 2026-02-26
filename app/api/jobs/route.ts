@@ -18,7 +18,7 @@ const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 function setCorsHeaders(res: NextResponse) {
   res.headers.set('Access-Control-Allow-Origin', '*');
   res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
-  res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-internal-request');
   return res;
 }
 
@@ -112,6 +112,15 @@ export async function PATCH(req: Request) {
 // ============================================================
 export async function GET(req: Request) {
   try {
+    // 🛡️ SECURITY CHECK: Prevent public browser access
+    const isInternal = req.headers.get('x-internal-request');
+    if (isInternal !== 'findmework-secure-call') {
+      return setCorsHeaders(NextResponse.json(
+        { success: false, message: "Unauthorized: Direct API access is blocked." }, 
+        { status: 403 }
+      ));
+    }
+
     await connectToDB();
     const { searchParams } = new URL(req.url);
     
@@ -212,11 +221,11 @@ export async function GET(req: Request) {
 
     if (fetchedJobs.length > 0) {
       for (const job of fetchedJobs) {
-           await Job.updateOne(
-             { job_id: job.job_id }, 
-             { $set: job }, 
-             { upsert: true }
-           );
+            await Job.updateOne(
+              { job_id: job.job_id }, 
+              { $set: job }, 
+              { upsert: true }
+            );
       }
     }
 
