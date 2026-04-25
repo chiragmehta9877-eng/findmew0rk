@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, Suspense, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { MapPin, ArrowRight, Filter, ChevronLeft, ChevronRight, X, CheckCircle, ChevronDown, ChevronUp, Zap, Sparkles, List, Navigation, Check } from 'lucide-react';
+import { MapPin, ArrowRight, Filter, ChevronLeft, ChevronRight, CheckCircle, ChevronDown, ChevronUp, Zap, Sparkles, List, Navigation, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar'; 
 import JobHero from '@/components/JobHero'; 
@@ -385,6 +385,7 @@ function XJobsContent() {
   const [isMobile, setIsMobile] = useState(true);
 
   const [showTour, setShowTour] = useState(false);
+  const [verifyingJobs, setVerifyingJobs] = useState<Record<string, boolean>>({});
   const jobsHeadingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -457,6 +458,56 @@ function XJobsContent() {
     handleJobClick(jobId);
   };
 
+  // 🔥 UPDATED handleVerifyJob FUNCTION: Ab ye poora Job Object lega aur Title + Text n8n ko bhejega
+  const handleVerifyJob = async (e: React.MouseEvent, job: any) => {
+    e.stopPropagation();
+    
+    // Check if user is logged in
+    if (!session?.user?.email) {
+        alert("🔒 Please Login To Verify!");
+        return;
+    }
+
+    if (!job || !job.job_id) {
+        alert("Job details are missing. Cannot verify.");
+        return;
+    }
+    
+    setVerifyingJobs(prev => ({ ...prev, [job.job_id]: true }));
+    try {
+      const webhookUrl = 'https://chiragmehta.app.n8n.cloud/webhook/6ec30106-4154-4fcf-b1c1-6d235fe6ad34'; 
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            jobId: job.job_id,
+            userEmail: session.user.email,
+            // 🔥 NAYA FIX: AI Agent ke liye Text bhej rahe hain
+            text: `Job Title: ${job.job_title || ''}\n\nDescription: ${job.text || ''}` 
+        }),
+      });
+
+      if (response.ok) {
+        sessionStorage.removeItem('xjobs_data_cache_v1');
+        // 👇 Fast response ke according alert
+        alert("✨ AI Analysis Started! The page will refresh in a few seconds to show the results.");
+        
+        // 👇 5 sec timeout, Agent fast chalega
+        setTimeout(() => {
+            window.location.reload();
+        }, 5000);
+      } else {
+        alert("Failed to start verification.");
+        setVerifyingJobs(prev => ({ ...prev, [job.job_id]: false }));
+      }
+    } catch (error) {
+      console.error("Webhook call failed:", error);
+      alert("Error connecting to verification service.");
+      setVerifyingJobs(prev => ({ ...prev, [job.job_id]: false }));
+    }
+  };
+
   const updateUrl = useCallback((updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(updates).forEach(([key, value]) => {
@@ -483,7 +534,6 @@ function XJobsContent() {
   const fetchJobs = useCallback((hasCache = false) => {
     if (!hasCache) setLoading(true);
     
-    // 🔥 FIX: Added the secret header so Backend recognizes this request!
     fetch(`/api/jobs?limit=10000&t=${Date.now()}`, {
         headers: {
             'x-internal-request': 'findmework-secure-call'
@@ -767,9 +817,8 @@ function XJobsContent() {
         setCurrentPage(nextPage);
         updateUrl({ page: String(nextPage) });
 
-        // wait for DOM update then smooth scroll
         setTimeout(() => {
-            scrollToFeed(false); // smooth
+            scrollToFeed(false); 
         }, 50);
     }
 };
@@ -781,7 +830,7 @@ const goToPrevPage = () => {
         updateUrl({ page: String(prevPage) });
 
         setTimeout(() => {
-            scrollToFeed(false); // smooth
+            scrollToFeed(false); 
         }, 50);
     }
 };
@@ -1041,7 +1090,66 @@ const goToPrevPage = () => {
                                   </h3>
                                   <p className="text-sm font-medium text-slate-600 dark:text-gray-300 mb-3">@{job.employer_name || "Hiring Manager"}</p>
                                   
-                                  <div className="flex flex-wrap gap-2 mb-4">
+                                 {/* --- AI VERIFICATION WALA HISSA (UPDATED FOR LOGGED IN USERS) --- */}
+                                  {(job.verifiedBy && session?.user?.email && job.verifiedBy.includes(session.user.email)) ? (
+                                    <div className="mt-1 flex items-center flex-wrap gap-2 mb-3">
+                                      {job.badgeType === "blue" && (
+                                        <span className="bg-blue-100 text-blue-800 text-[10px] font-extrabold px-2 py-1 rounded tracking-wide border border-blue-200">
+                                          PREMIUM VERIFIED (BLUE)
+                                        </span>
+                                      )}
+                                      {job.badgeType === "silver" && (
+                                        <span className="bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 text-[10px] font-extrabold px-2 py-1 rounded tracking-wide border border-slate-300 dark:border-slate-600">
+                                          VERIFIED (SILVER)
+                                        </span>
+                                      )}
+                                      {job.badgeType === "red" && (
+                                        <span className="bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[10px] font-extrabold px-2 py-1 rounded tracking-wide border border-red-200 dark:border-red-800/50">
+                                          ⚠️ LOW TRUST (RED)
+                                        </span>
+                                      )}
+                                      
+                                      {job.trustScore !== undefined && job.trustScore !== null && (
+                                        <span className={`text-[11px] font-bold ${
+                                          job.trustScore >= 8 ? 'text-blue-600 dark:text-blue-400' : 
+                                          job.trustScore >= 5 ? 'text-green-600 dark:text-green-400' : 
+                                          'text-red-600 dark:text-red-400'
+                                        }`}>
+                                          Trust Score: {job.trustScore}/10
+                                        </span>
+                                      )}
+
+                                      <button 
+                                          onClick={(e) => handleVerifyJob(e, job)}
+                                          disabled={verifyingJobs[job.job_id]}
+                                          className="ml-auto sm:ml-2 flex items-center gap-1 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-gray-300 px-2 py-1 rounded text-[10px] font-bold transition-all disabled:opacity-50"
+                                          title="Check again with latest AI Prompt"
+                                      >
+                                          {verifyingJobs[job.job_id] ? "⏳ Updating..." : "🔄 Re-check"}
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="mt-1 mb-3">
+                                      <button 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (!session?.user?.email) {
+                                              alert("🔒 Please Login To Verify!");
+                                              return;
+                                            }
+                                            handleVerifyJob(e, job);
+                                          }}
+                                          disabled={verifyingJobs[job.job_id]}
+                                          className="bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50 text-[10px] font-bold px-3 py-1 rounded transition-colors disabled:opacity-50"
+                                      >
+                                          {!session?.user?.email 
+                                            ? "🔒 Login to Verify AI" 
+                                            : (verifyingJobs[job.job_id] ? "Verifying..." : "✨ Verify with AI")}
+                                      </button>
+                                    </div>
+                                  )}
+                                  
+                                  <div className="flex flex-wrap gap-2 mb-4 mt-2">
                                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wide ${isSpotlight ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200' : 'bg-gray-100 dark:bg-white/5 text-slate-500 dark:text-gray-400'}`}>
                                       <MapPin size={10} /> 
                                       {displayMode !== 'Unspecified' && <span className="text-blue-600 dark:text-blue-400">{displayMode} • </span>} 
