@@ -458,7 +458,7 @@ function XJobsContent() {
     handleJobClick(jobId);
   };
 
-  // 🔥 UPDATED handleVerifyJob FUNCTION: Ab ye poora Job Object lega aur Title + Text n8n ko bhejega
+  
   const handleVerifyJob = async (e: React.MouseEvent, job: any) => {
     e.stopPropagation();
     
@@ -475,7 +475,12 @@ function XJobsContent() {
     
     setVerifyingJobs(prev => ({ ...prev, [job.job_id]: true }));
     try {
-      const webhookUrl = 'https://chiragmehta.app.n8n.cloud/webhook/6ec30106-4154-4fcf-b1c1-6d235fe6ad34'; 
+      const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
+
+if (!webhookUrl) {
+    alert("Webhook URL is missing in environment variables!");
+    return;
+}
       
       const response = await fetch(webhookUrl, {
         method: 'POST',
@@ -483,17 +488,17 @@ function XJobsContent() {
         body: JSON.stringify({ 
             jobId: job.job_id,
             userEmail: session.user.email,
-            // 🔥 NAYA FIX: AI Agent ke liye Text bhej rahe hain
+          
             text: `Job Title: ${job.job_title || ''}\n\nDescription: ${job.text || ''}` 
         }),
       });
 
       if (response.ok) {
         sessionStorage.removeItem('xjobs_data_cache_v1');
-        // 👇 Fast response ke according alert
-        alert("✨ AI Analysis Started! The page will refresh in a few seconds to show the results.");
+       
+        alert("AI Analysis Started! The page will refresh in a few seconds to show the results.");
         
-        // 👇 5 sec timeout, Agent fast chalega
+       
         setTimeout(() => {
             window.location.reload();
         }, 5000);
